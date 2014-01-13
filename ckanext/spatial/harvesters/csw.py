@@ -152,6 +152,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
             return False
 
         identifier = harvest_object.guid
+	print harvest_object
         try:
             record = self.csw.getrecordbyid([identifier], outputschema=self.output_schema())
         except Exception, e:
