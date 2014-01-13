@@ -239,7 +239,11 @@ class SpatialHarvester(HarvesterBase):
             'contact-email',
             'frequency-of-update',
             'spatial-data-service-type',
-        ]:
+            'source',
+	    "dateStamp",
+            "metadataStandard",
+            "metadataStandardVersion",
+       ]:
             extras[name] = iso_values[name]
 
         if len(iso_values.get('progress', [])):
@@ -251,6 +255,7 @@ class SpatialHarvester(HarvesterBase):
             extras['resource-type'] = iso_values['resource-type'][0]
         else:
             extras['resource-type'] = ''
+
 
         extras['licence'] = iso_values.get('use-constraints', '')
 
@@ -267,6 +272,10 @@ class SpatialHarvester(HarvesterBase):
                 extras['licence_url'] = license_url_extracted
 
         extras['access_constraints'] = iso_values.get('limitations-on-public-access', '')
+        if len(extras['access_constraints']) and "Creative Commons Attribution 3.0 Australia Licence" in extras['access_constraints']:
+		extras['licence'] = 'cc-by'
+		package_dict['license_id'] = 'cc-by'
+	        extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
 
         # Grpahic preview
         browse_graphic = iso_values.get('browse-graphic')
@@ -326,6 +335,7 @@ class SpatialHarvester(HarvesterBase):
                     )
 
                 extras['spatial'] = extent_string.strip()
+                extras['spatial_coverage'] = extent_string.strip()
         else:
             log.debug('No spatial extent defined for this object')
 
@@ -335,7 +345,7 @@ class SpatialHarvester(HarvesterBase):
         if len(resource_locators):
             for resource_locator in resource_locators:
                 url = resource_locator.get('url', '').strip()
-                if url:
+                if url and not url.startswith('http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0'):
                     resource = {}
                     resource['format'] = guess_resource_format(url)
                     if resource['format'] == 'wms' and config.get('ckanext.spatial.harvest.validate_wms', False):
@@ -354,6 +364,24 @@ class SpatialHarvester(HarvesterBase):
                             'resource_locator_function': resource_locator.get('function') or '',
                         })
                     package_dict['resources'].append(resource)
+
+	# detection of 0 resources
+	if iso_values['source'] and 'ga.gov.au' in iso_values['source']:
+		if len( package_dict['resources']) == 0:
+			#TODO add tag here
+			package_dict['notes'] = package_dict['notes'] + "\n\nPlease note, this dataset is not freely available for download. We have included it on the data.gov.au index for discoverability purposes. You can purchase it at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+		else:
+			package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+	#AGLS mapping
+	if iso_values['source']:
+		package_dict['url'] = iso_values['source']
+	if iso_values['metadata-date']:
+		extras['temporal_coverage'] =  iso_values['metadata-date']
+	if iso_values['frequency-of-update']:
+		extras['update_freq'] = iso_values['frequency-of-update']
+	if iso_values['contact-email']:
+		extras['contact_point'] =  iso_values['contact-email']
+	extras['data_state'] = 'inactive'
 
         extras_as_dict = []
         for key, value in extras.iteritems():

@@ -476,6 +476,26 @@ class ISODocument(MappedXmlDocument):
             search_paths="gmd:fileIdentifier/gco:CharacterString/text()",
             multiplicity="0..1",
         ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="source",
+            search_paths="gmd:dataSetURI/gco:CharacterString/text()",
+            multiplicity="0..1",
+        ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="dateStamp",
+            search_paths="gmd:dateStamp/gco:Date/text()",
+            multiplicity="0..1",
+        ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="metadataStandard",
+            search_paths="gmd:metadataStandardName/gco:CharacterString/text()",
+            multiplicity="0..1",
+        ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="metadataStandardVersion",
+            search_paths="gmd:metadataStandardVersion/gco:CharacterString/text()",
+            multiplicity="0..1",
+        ),
         ISOElement(
             name="metadata-language",
             search_paths=[

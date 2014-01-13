@@ -89,7 +89,7 @@ class CswService(OwsService):
         if csw.exceptionreport:
             err = 'Error getting records: %r' % \
                   csw.exceptionreport.exceptions
-            #log.error(err)
+            log.error(err)
             raise CswError(err)
         return [self._xmd(r) for r in csw.records.values()]
 
@@ -156,10 +156,11 @@ class CswService(OwsService):
         # Ordinary Python version's don't support the metadata argument
         log.info('Making CSW request: getrecordbyid %r %r', ids, kwa)
         csw.getrecordbyid(ids, **kwa)
+        print csw.request
         if csw.exceptionreport:
             err = 'Error getting record by id: %r' % \
                   csw.exceptionreport.exceptions
-            #log.error(err)
+            log.error(err)
             raise CswError(err)
         if not csw.records:
             return
