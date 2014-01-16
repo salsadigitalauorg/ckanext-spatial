@@ -296,6 +296,7 @@ class SpatialHarvester(HarvesterBase):
         if iso_values['responsible-organisation']:
             parties = {}
             for party in iso_values['responsible-organisation']:
+		extras['jurisdiction'] = party['organisation-name']
                 if party['organisation-name'] in parties:
                     if not party['role'] in parties[party['organisation-name']]:
                         parties[party['organisation-name']].append(party['role'])
@@ -376,7 +377,9 @@ class SpatialHarvester(HarvesterBase):
 	if iso_values['source']:
 		package_dict['url'] = iso_values['source']
 	if iso_values['metadata-date']:
-		extras['temporal_coverage'] =  iso_values['metadata-date']
+		extras['temporal_coverage'] = iso_values['metadata-date']
+	if iso_values['dataset-reference-date'][0]['value']:
+		extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
 	if iso_values['frequency-of-update']:
 		extras['update_freq'] = iso_values['frequency-of-update']
 	if iso_values['contact-email']:
