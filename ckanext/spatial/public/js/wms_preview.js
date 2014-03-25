@@ -200,7 +200,7 @@ info = new OpenLayers.Control.WMSGetFeatureInfo({
         self.map.addControl(info);
         info.activate();
 
-          self.map.zoomTo(11);
+          self.map.zoomToExtent(maxExtent);
       });
     }
   }
