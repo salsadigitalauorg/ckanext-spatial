@@ -143,11 +143,11 @@ this.ckan.module('wmspreview', function (jQuery, _) {
           });
 //          olLayers.push(dummyLayer);
 
-var cloudmade_url = '.cloudmade.com/98a0ce317ad942cea786ded25271f410/116858/256/${z}/${x}/${y}.png';
+var mapbox_url = '.mapbox.com/v3/maxious.gdb67hbh/${z}/${x}/${y}.png';
 if (window.location.protocol != "https:") {
-var base_urls = ['http://a.tiles'+cloudmade_url,'http://b.tiles'+cloudmade_url,'http://c.tiles'+cloudmade_url];
+var base_urls = ['http://a.tiles'+mapbox_url,'http://b.tiles'+mapbox_url,'http://c.tiles'+mapbox_url,'http://d.tiles'+mapbox_url];
 } else {
-var base_urls = ['https://ssl_tiles'+cloudmade_url];
+var base_urls = ['https://a.tiles'+mapbox_url,'https://b.tiles'+mapbox_url,'https://c.tiles'+mapbox_url,'https://d.tiles'+mapbox_url];
         }          
 
           var baseLayer = new OpenLayers.Layer.OSM("OSM",base_urls,{
