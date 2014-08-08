@@ -360,42 +360,19 @@ class SpatialHarvester(HarvesterBase):
                     resource.update(
                         {
                             'url': url,
-                            'name': resource_locator.get('name') or p.toolkit._('Unnamed resource'),
-                            'description': resource_locator.get('description') or  '',
+                            'name': resource_locator.get('name') or resource_locator.get('description') or p.toolkit._('Unnamed resource'),
+                            'description': (resource_locator.get('description') if resource_locator.get('name') else None) or  '',
                             'resource_locator_protocol': resource_locator.get('protocol') or '',
                             'resource_locator_function': resource_locator.get('function') or '',
                         })
                     package_dict['resources'].append(resource)
 
 	# detection of 0 resources
-	if iso_values['source'] and 'ga.gov.au' in iso_values['source']:
+	if True:
 		res_string = json.dumps(package_dict['resources']) 
-		if re.search("GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|MapInfo|ecw|wms|wfs|pGDB|tab\\.|\\.dat|misc",res_string,re.IGNORECASE):
-			package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+		if re.search("GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc",res_string,re.IGNORECASE):
+			if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
 		else:
-			# exclude
-			log.debug('Not machine readable')
-			'''res_urls = []
-			if len( package_dict['resources']) == 0:
-				 res_urls.append(iso_values['title'])
-				 package_dict['resources'].append({'url': iso_values['source'], 'name': iso_values['title'], 'package_id': 'geoscience-australia-resources',
-					 "description": "Please note, this dataset is not freely available for download. We have included it on the data.gov.au index for discoverability purposes. You can purchase it at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html \n\n" + iso_values['abstract']})
-			else:
-				for resource in package_dict['resources']:
-					resource['name'] = iso_values['title']
-					resource['package_id'] = 'geoscience-australia-resources'
-					if 'shp' in resource['url']:
-						resource['format'] = 'shp'
-					res_urls.append( resource['url'])
-			context = {'model': model, 'session': model.Session, 'user': self._get_user_name()}
-		        package =  p.toolkit.get_action('package_show')(context,{'id':'geoscience-australia-resources'})
-			for resource in package['resources']:
-				if resource['url'] in res_urls:
-					for new_resource in package_dict['resources']:
-						if  resource['url'] == new_resource['url']:
-							package_dict['resources'].remove(new_resource)
-			for new_resource in package_dict['resources']:
-				p.toolkit.get_action('resource_create')(context, new_resource)'''
 			return None
 			
 	#AGLS mapping
