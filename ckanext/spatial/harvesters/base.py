@@ -13,7 +13,6 @@ import hashlib
 import dateutil
 import mimetypes
 
-
 from pylons import config
 from owslib import wms
 import requests
@@ -58,7 +57,7 @@ def guess_standard(content):
     return 'unknown'
 
 
-def guess_resource_format(url, use_mimetypes=True):
+def guess_resource_format(url, use_mimetypes=False):
     '''
     Given a URL try to guess the best format to assign to the resource
 
@@ -92,9 +91,12 @@ def guess_resource_format(url, use_mimetypes=True):
             return resource_type
 
     file_types = {
-        'kml' : ('kml',),
+        'kml': ('kml',),
         'kmz': ('kmz',),
         'gml': ('gml',),
+        'csv': ('csv',),
+        'xls': ('xls', 'xlsx'),
+
     }
 
     for file_type, extensions in file_types.iteritems():
@@ -109,7 +111,6 @@ def guess_resource_format(url, use_mimetypes=True):
 
 
 class SpatialHarvester(HarvesterBase):
-
     _user_name = None
 
     _site_user = None
@@ -122,7 +123,7 @@ class SpatialHarvester(HarvesterBase):
     {"type": "Polygon", "coordinates": [[[$xmin, $ymin], [$xmax, $ymin], [$xmax, $ymax], [$xmin, $ymax], [$xmin, $ymin]]]}
     ''')
 
-    ## IHarvester
+    # # IHarvester
 
     def validate_config(self, source_config):
         if not source_config:
@@ -147,10 +148,37 @@ class SpatialHarvester(HarvesterBase):
 
         return source_config
 
-    ##
+    # #
 
     ## SpatialHarvester
 
+    organization_cache = {}
+
+    def munge_title_to_name(self,name):
+        '''Munge a package title into a package name.
+        '''
+        # convert spaces and separators
+        name = re.sub('[ .:/,]', '-', name)
+        # take out not-allowed characters
+        name = re.sub('[^a-zA-Z0-9-_]', '', name).lower()
+        # remove doubles
+        name = re.sub('---', '-', name)
+        name = re.sub('--', '-', name)
+        name = re.sub('--', '-', name)
+        # remove leading or trailing hyphens
+        name = name.strip('-')[:99]
+        return name
+
+    def get_org(self, context, organization_title):
+        organization_id = self.munge_title_to_name(organization_title).lower()
+        if organization_id not in self.organization_cache:
+            try:
+                self.organization_cache[organization_id] = p.toolkit.get_action('organization_show')(context, {
+                'id': organization_id, 'include_datasets': False})
+            except:
+                self.organization_cache[organization_id] = p.toolkit.get_action('organization_create')(context, {
+                'name': organization_id, 'title': organization_title})
+        return self.organization_cache[organization_id]
 
     def get_package_dict(self, iso_values, harvest_object):
         '''
@@ -193,9 +221,10 @@ class SpatialHarvester(HarvesterBase):
 
         tags = []
         if 'tags' in iso_values:
-            for tag in iso_values['tags']:
-                tag = tag[:50] if len(tag) > 50 else tag
-                tags.append({'name': tag})
+            for tagname in iso_values['tags']:
+                for tag in tagname.split("|"):
+                    tag = tag[:50] if len(tag) > 50 else tag
+                    tags.append({'name': tag.strip()})
 
         package_dict = {
             'title': iso_values['title'],
@@ -217,7 +246,8 @@ class SpatialHarvester(HarvesterBase):
             if not name:
                 name = self._gen_new_name(str(iso_values['guid']))
             if not name:
-                raise Exception('Could not generate a unique name from the title or the GUID. Please choose a more unique title.')
+                raise Exception(
+                    'Could not generate a unique name from the title or the GUID. Please choose a more unique title.')
             package_dict['name'] = name
         else:
             package_dict['name'] = package.name
@@ -241,10 +271,10 @@ class SpatialHarvester(HarvesterBase):
             'frequency-of-update',
             'spatial-data-service-type',
             'source',
-	    "dateStamp",
+            "dateStamp",
             "metadataStandard",
             "metadataStandardVersion",
-       ]:
+        ]:
             extras[name] = iso_values[name]
 
         if len(iso_values.get('progress', [])):
@@ -256,7 +286,6 @@ class SpatialHarvester(HarvesterBase):
             extras['resource-type'] = iso_values['resource-type'][0]
         else:
             extras['resource-type'] = ''
-
 
         extras['licence'] = iso_values.get('use-constraints', '')
 
@@ -273,10 +302,11 @@ class SpatialHarvester(HarvesterBase):
                 extras['licence_url'] = license_url_extracted
 
         extras['access_constraints'] = iso_values.get('limitations-on-public-access', '')
-        if len(extras['access_constraints']) and "Creative Commons Attribution 3.0 Australia Licence" in extras['access_constraints']:
-		extras['licence'] = 'cc-by'
-		package_dict['license_id'] = 'cc-by'
-	        extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
+        if len(extras['access_constraints']) and "Creative Commons Attribution 3.0 Australia Licence" in extras[
+            'access_constraints']:
+            extras['licence'] = 'cc-by'
+            package_dict['license_id'] = 'cc-by'
+            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
 
         # Grpahic preview
         browse_graphic = iso_values.get('browse-graphic')
@@ -288,7 +318,6 @@ class SpatialHarvester(HarvesterBase):
             if browse_graphic.get('type'):
                 extras['graphic-preview-type'] = browse_graphic.get('type')
 
-
         for key in ['temporal-extent-begin', 'temporal-extent-end']:
             if len(iso_values[key]) > 0:
                 extras[key] = iso_values[key][0]
@@ -297,13 +326,21 @@ class SpatialHarvester(HarvesterBase):
         if iso_values['responsible-organisation']:
             parties = {}
             for party in iso_values['responsible-organisation']:
-		extras['jurisdiction'] = party['organisation-name']
+                extras['jurisdiction'] = party['organisation-name']
                 if party['organisation-name'] in parties:
                     if not party['role'] in parties[party['organisation-name']]:
                         parties[party['organisation-name']].append(party['role'])
                 else:
                     parties[party['organisation-name']] = [party['role']]
             extras['responsible-party'] = [{'name': k, 'roles': v} for k, v in parties.iteritems()]
+            for k, v in parties.iteritems():
+                context = {
+                    'model': model,
+                    'session': model.Session,
+                    'user': self._get_user_name(),
+                }
+                org = self.get_org(context, k)
+                package_dict['owner_org'] = org['id']
 
         if len(iso_values['bbox']) > 0:
             bbox = iso_values['bbox'][0]
@@ -319,7 +356,7 @@ class SpatialHarvester(HarvesterBase):
                 ymax = float(bbox['north'])
             except ValueError, e:
                 self._save_object_error('Error parsing bounding box value: {0}'.format(str(e)),
-                                    harvest_object, 'Import')
+                                        harvest_object, 'Import')
             else:
                 # Construct a GeoJSON extent so ckanext-spatial can register the extent geometry
 
@@ -330,7 +367,7 @@ class SpatialHarvester(HarvesterBase):
                         x=xmin, y=ymin
                     )
                     self._save_object_error('Point extent defined instead of polygon',
-                                     harvest_object, 'Import')
+                                            harvest_object, 'Import')
                 else:
                     extent_string = self.extent_template.substitute(
                         xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax
@@ -341,15 +378,21 @@ class SpatialHarvester(HarvesterBase):
         else:
             log.debug('No spatial extent defined for this object')
 
-        resource_locators = iso_values.get('resource-locator', []) +\
-            iso_values.get('resource-locator-identification', [])
+        resource_locators = iso_values.get('resource-locator', []) + \
+                            iso_values.get('resource-locator-identification', [])
 
         if len(resource_locators):
             for resource_locator in resource_locators:
-                url = resource_locator.get('url', '').strip()
-                if url and not url.startswith('http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0'):
+                url = resource_locator.get('url')
+                if url and url.startswith('http') and not url.startswith(
+                        'http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0'):
+                    url = url.strip()
                     resource = {}
                     resource['format'] = guess_resource_format(url)
+                    if 'name' not in resource and 'fname' in url:
+                        fname = re.compile('fname=(.*)&')
+                        resource['name'] = fname.search(url).group(1)
+                        resource['format'] = guess_resource_format(resource['name'])
                     if resource['format'] == 'wms' and config.get('ckanext.spatial.harvest.validate_wms', False):
                         # Check if the service is a view service
                         test_url = url.split('?')[0] if '?' in url else url
@@ -360,33 +403,39 @@ class SpatialHarvester(HarvesterBase):
                     resource.update(
                         {
                             'url': url,
-                            'name': resource_locator.get('name') or resource_locator.get('description') or p.toolkit._('Unnamed resource'),
-                            'description': (resource_locator.get('description') if resource_locator.get('name') else None) or  '',
+                            'name': resource.get('name') or resource_locator.get('name') or resource_locator.get(
+                                'description') or p.toolkit._(
+                                'Unnamed resource'),
+                            'description': (resource_locator.get('description') if resource_locator.get(
+                                'name') else None) or '',
                             'resource_locator_protocol': resource_locator.get('protocol') or '',
                             'resource_locator_function': resource_locator.get('function') or '',
                         })
                     package_dict['resources'].append(resource)
 
-	# detection of 0 resources
-	if True:
-		res_string = json.dumps(package_dict['resources']) 
-		if re.search("GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc",res_string,re.IGNORECASE):
-			if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
-		else:
-			return None
-			
-	#AGLS mapping
-	if iso_values['source']:
-		package_dict['url'] = iso_values['source']
-	if iso_values['metadata-date']:
-		extras['temporal_coverage'] = iso_values['metadata-date']
-	if iso_values['dataset-reference-date'][0]['value']:
-		extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
-	if iso_values['frequency-of-update']:
-		extras['update_freq'] = iso_values['frequency-of-update']
-	if iso_values['contact-email']:
-		extras['contact_point'] =  iso_values['contact-email']
-	extras['data_state'] = 'inactive'
+        # detection of 0 resources
+        if True:
+            res_string = json.dumps(package_dict['resources'])
+            if re.search(
+                    "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc",
+                    res_string, re.IGNORECASE):
+                if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict[
+                                                                                                             'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+            else:
+                return None
+
+        #AGLS mapping
+        if iso_values['source']:
+            package_dict['url'] = iso_values['source']
+        if iso_values['metadata-date']:
+            extras['temporal_coverage'] = iso_values['metadata-date']
+        if iso_values['dataset-reference-date'][0]['value']:
+            extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
+        if iso_values['frequency-of-update']:
+            extras['update_freq'] = iso_values['frequency-of-update']
+        if iso_values['contact-email']:
+            extras['contact_point'] = iso_values['contact-email']
+        extras['data_state'] = 'inactive'
 
         extras_as_dict = []
         for key, value in extras.iteritems():
@@ -430,9 +479,9 @@ class SpatialHarvester(HarvesterBase):
 
         # Get the last harvested object (if any)
         previous_object = model.Session.query(HarvestObject) \
-                          .filter(HarvestObject.guid==harvest_object.guid) \
-                          .filter(HarvestObject.current==True) \
-                          .first()
+            .filter(HarvestObject.guid == harvest_object.guid) \
+            .filter(HarvestObject.current == True) \
+            .first()
 
         if status == 'delete':
             # Delete package
@@ -465,7 +514,8 @@ class SpatialHarvester(HarvesterBase):
                 return False
         else:
             if harvest_object.content is None:
-                self._save_object_error('Empty content for object {0}'.format(harvest_object.id), harvest_object, 'Import')
+                self._save_object_error('Empty content for object {0}'.format(harvest_object.id), harvest_object,
+                                        'Import')
                 return False
 
             # Validate ISO document
@@ -473,8 +523,9 @@ class SpatialHarvester(HarvesterBase):
             if not is_valid:
                 # If validation errors were found, import will stop unless
                 # configuration per source or per instance says otherwise
-                continue_import = p.toolkit.asbool(config.get('ckanext.spatial.harvest.continue_on_validation_errors', False)) or \
-                    self.source_config.get('continue_on_validation_errors')
+                continue_import = p.toolkit.asbool(
+                    config.get('ckanext.spatial.harvest.continue_on_validation_errors', False)) or \
+                                  self.source_config.get('continue_on_validation_errors')
                 if not continue_import:
                     return False
 
@@ -499,12 +550,12 @@ class SpatialHarvester(HarvesterBase):
             # First make sure there already aren't current objects
             # with the same guid
             existing_object = model.Session.query(HarvestObject.id) \
-                            .filter(HarvestObject.guid==iso_guid) \
-                            .filter(HarvestObject.current==True) \
-                            .first()
+                .filter(HarvestObject.guid == iso_guid) \
+                .filter(HarvestObject.current == True) \
+                .first()
             if existing_object:
                 self._save_object_error('Object {0} already has this guid {1}'.format(existing_object.id, iso_guid),
-                        harvest_object, 'Import')
+                                        harvest_object, 'Import')
                 return False
 
             harvest_object.guid = iso_guid
@@ -522,7 +573,7 @@ class SpatialHarvester(HarvesterBase):
             metadata_modified_date = dateutil.parser.parse(iso_values['metadata-date'], ignoretz=True)
         except ValueError:
             self._save_object_error('Could not extract reference date for object {0} ({1})'
-                        .format(harvest_object.id, iso_values['metadata-date']), harvest_object, 'Import')
+                                    .format(harvest_object.id, iso_values['metadata-date']), harvest_object, 'Import')
             return False
 
         harvest_object.metadata_modified_date = metadata_modified_date
@@ -544,9 +595,9 @@ class SpatialHarvester(HarvesterBase):
 
         # Create / update the package
         context.update({
-           'extras_as_string': True,
-           'api_version': '2',
-           'return_id_only': True})
+            'extras_as_string': True,
+            'api_version': '2',
+            'return_id_only': True})
 
         if self._site_user and context['user'] == self._site_user['name']:
             context['ignore_auth'] = True
@@ -602,12 +653,12 @@ class SpatialHarvester(HarvesterBase):
                 # Reindex the corresponding package to update the reference to the
                 # harvest object
                 if ((config.get('ckanext.spatial.harvest.reindex_unchanged', True) != 'False'
-                    or self.source_config.get('reindex_unchanged') != 'False')
+                     or self.source_config.get('reindex_unchanged') != 'False')
                     and harvest_object.package_id):
                     context.update({'validate': False, 'ignore_auth': True})
                     try:
                         package_dict = logic.get_action('package_show')(context,
-                            {'id': harvest_object.package_id})
+                                                                        {'id': harvest_object.package_id})
                     except p.toolkit.ObjectNotFound:
                         pass
                     else:
@@ -635,6 +686,7 @@ class SpatialHarvester(HarvesterBase):
         model.Session.commit()
 
         return True
+
     ##
 
     def _is_wms(self, url):
@@ -703,7 +755,6 @@ class SpatialHarvester(HarvesterBase):
                     if custom_validator not in all_validators:
                         self._validator.add_validator(custom_validator)
 
-
         return self._validator
 
     def _get_user_name(self):
@@ -724,8 +775,8 @@ class SpatialHarvester(HarvesterBase):
 
         context = {'model': model,
                    'ignore_auth': True,
-                   'defer_commit': True, # See ckan/ckan#1714
-                  }
+                   'defer_commit': True,  # See ckan/ckan#1714
+        }
         self._site_user = p.toolkit.get_action('get_site_user')(context, {})
 
         config_user_name = config.get('ckanext.spatial.harvest.user_name')
@@ -798,7 +849,8 @@ class SpatialHarvester(HarvesterBase):
 
         valid, profile, errors = validator.is_valid(xml)
         if not valid:
-            log.error('Validation errors found using profile {0} for object with GUID {1}'.format(profile, harvest_object.guid))
+            log.error('Validation errors found using profile {0} for object with GUID {1}'.format(profile,
+                                                                                                  harvest_object.guid))
             for error in errors:
                 self._save_object_error(error[0], harvest_object, 'Validation', line=error[1])
 
