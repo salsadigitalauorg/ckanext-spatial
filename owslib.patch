@@ -1,5 +1,5 @@
 diff --git a/csw.py b/csw.py
-index ce2f4bc..d8f9d19 100644
+index ce2f4bc..0f122c4 100644
 --- a/csw.py
 +++ b/csw.py
 @@ -265,7 +265,8 @@ class CatalogueServiceWeb:
@@ -12,7 +12,19 @@ index ce2f4bc..d8f9d19 100644
          self._invoke()
   
          if self.exceptionreport is None:
-@@ -505,6 +506,10 @@ class CatalogueServiceWeb:
+@@ -331,7 +332,10 @@ class CatalogueServiceWeb:
+                     node2.append(flt.setConstraintList(constraints))
+                 # Now add a CQL filter if passed in
+                 elif cql is not None:
+-                    etree.SubElement(node2, util.nspath_eval('csw:CqlText', namespaces)).text = cql
++                    if cql[:1] == '<':
++                        node2.append(etree.fromstring(cql))
++                    else:
++                        etree.SubElement(node2, util.nspath_eval('csw:CqlText', namespaces)).text = cql
+                 
+             if sortby is not None and isinstance(sortby, fes.SortBy):
+                 node1.append(sortby.toXML())
+@@ -505,6 +509,10 @@ class CatalogueServiceWeb:
                  val = i.find(util.nspath_eval('gmd:fileIdentifier/gco:CharacterString', namespaces))
                  identifier = self._setidentifierkey(util.testXMLValue(val))
                  self.records[identifier] = MD_Metadata(i)
@@ -23,7 +35,7 @@ index ce2f4bc..d8f9d19 100644
          elif outputschema == namespaces['fgdc']: # fgdc csdgm
              for i in self._exml.findall('.//metadata'):
                  val = i.find('idinfo/datasetid')
-@@ -580,7 +585,8 @@ class CatalogueServiceWeb:
+@@ -580,7 +588,8 @@ class CatalogueServiceWeb:
              self.request = util.xml2string(etree.tostring(self.request))
  
              self.response = util.http_post(self.url, self.request, self.lang, self.timeout)
