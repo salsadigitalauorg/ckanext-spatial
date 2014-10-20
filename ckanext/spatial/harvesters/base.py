@@ -150,11 +150,11 @@ class SpatialHarvester(HarvesterBase):
 
     # #
 
-    ## SpatialHarvester
+    # # SpatialHarvester
 
     organization_cache = {}
 
-    def munge_title_to_name(self,name):
+    def munge_title_to_name(self, name):
         '''Munge a package title into a package name.
         '''
         # convert spaces and separators
@@ -170,14 +170,60 @@ class SpatialHarvester(HarvesterBase):
         return name
 
     def get_org(self, context, organization_title):
+        organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'Geoscience Australia',
+                                      'Antarctic Climate and Ecosystems CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
+                                      'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'Geoscience Australia',
+                                      'Commonwealth Scientific and Industrial Research Organisation (CSIRO)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'CSIRO Marine and Atmospheric Research (CMAR)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Department of Industry and Investment (DII)': 'NSW Department of Primary Industries',
+                                      'Department of Natural Resources and Mines, Queensland': 'Queensland Department of Natural Resources and Mines',
+                                      'Derwent Estuary Program': 'Environment Protection Authority Tasmania',
+                                      'ECOCEAN': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'eMarine Information Infrastructure (eMII)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Emergency Services GIS': 'Department of Primary Industries, Parks, Water and Environment (Tasmania)',
+                                      'Fisheries NSW, Primary Industries': 'NSW Department of Primary Industries',
+                                      'Flinders University, School of Chemistry, Physics and Earth Sciences': 'Flinders University',
+                                      'Flinders University, School of Chemistry, Physics and Earth Sciences,': 'Flinders University',
+                                      'Flinders University, School of Chemisty, Physics and Earth Sciences': 'Flinders University',
+                                      'School of Environment, Flinders University': 'Flinders University',
+                                      'School of the Environment, Flinders University': 'Flinders University',
+                                      'IMAS, University of Tasmania': 'Institute for Marine and Antarctic Studies',
+                                      'Institute for Marine and Antarctic Studies (IMAS), University of Tasmania': 'Institute for Marine and Antarctic Studies',
+                                      'Land and Property Information': 'NSW Land and Property Information',
+                                      'Land and Property Information-NSW': 'NSW Land and Property Information',
+                                      'Marine Futures Project, The University of Western Australia (UWA)': 'University of Western Australia',
+                                      'Marine Policy and Planning Branch, Department of Environment and Conservation': 'WA Department of Parks and Wildlife',
+                                      'National Tidal Centre': 'Bureau of Meteorology',
+                                      'NIWA National Institute of Water & Atmospheric Research': 'NZ National Institute of Water & Atmospheric Research',
+                                      'NSW Department of Environment, Climate Change and Water (DECCW)': 'NSW Office of Environment and Heritage',
+                                      'DTIRIS Resources & Energy NSW': 'NSW Department of Trade and Investment, Regional Infrastructure and Services',
+                                      'Office of Environment and Heritage': 'NSW Office of Environment and Heritage',
+                                      'Office of Environment and Heritage (OEH)': 'NSW Office of Environment and Heritage',
+                                      'Ocean Technology Group, University of Sydney': 'University of Sydney',
+                                      'Royal Australian Navy Hydrography and Metoc Branch': 'Royal Australian Navy',
+                                      'Royal Australian Navy Hydrography and METOC Branch': 'Royal Australian Navy',
+                                      'SARDI Aquatic Sciences': 'South Australian Research and Development Institute',
+                                      'School of Environmental Science, Murdoch University': 'Murdoch University',
+                                      'The Australian National University (ANU)': 'Australian National University',
+                                      'The University of Sydney': 'University of Sydney',
+                                      'WA Department of Fisheries - Scientific Custodian': 'WA Department of Fisheries',
+                                      'WA Department of Fisheries - Technical Custodian': 'WA Department of Fisheries',
+                                      'Department of Transport': 'WA Department of Transport',
+                                      'Geological Survey Division, Department of Mines and Petroleum': 'WA Department of Mines and Petroleum'
+        }
+        if organization_title in organization_title_mapping:
+            organization_title = organization_title_mapping[organization_title]
+
         organization_id = self.munge_title_to_name(organization_title).lower()
         if organization_id not in self.organization_cache:
             try:
                 self.organization_cache[organization_id] = p.toolkit.get_action('organization_show')(context, {
-                'id': organization_id, 'include_datasets': False})
+                    'id': organization_id, 'include_datasets': False})
             except:
                 self.organization_cache[organization_id] = p.toolkit.get_action('organization_create')(context, {
-                'name': organization_id, 'title': organization_title})
+                    'name': organization_id, 'title': organization_title})
         return self.organization_cache[organization_id]
 
     def get_package_dict(self, iso_values, harvest_object):
@@ -222,7 +268,7 @@ class SpatialHarvester(HarvesterBase):
         tags = []
         if 'tags' in iso_values:
             for tagname in iso_values['tags']:
-                for tag in tagname.split("|"):
+                for tag in tagname.replace(' - ','|').split("|"):
                     tag = tag[:50] if len(tag) > 50 else tag
                     tags.append({'name': tag.strip()})
 
@@ -385,14 +431,26 @@ class SpatialHarvester(HarvesterBase):
             for resource_locator in resource_locators:
                 url = resource_locator.get('url')
                 if url and url.startswith('http') and not url.startswith(
-                        'http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0'):
+                        'http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0') \
+                        and url not in ['http://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/1297.01998?OpenDocument','http://www.aodc.gov.au/','http://gcmd.nasa.gov/index.html','http://aims.gov.au','http://www.aims.gov.au','http://www.aims.gov.au/adc']:
                     url = url.strip()
                     resource = {}
                     resource['format'] = guess_resource_format(url)
+
                     if 'name' not in resource and 'fname' in url:
                         fname = re.compile('fname=(.*)&')
                         resource['name'] = fname.search(url).group(1)
                         resource['format'] = guess_resource_format(resource['name'])
+                    if 'kml' in url or '(kml)' in resource_locator['description']:
+                        resource['format'] = 'kml'
+                    if 'xhtml' in url:
+                        resource['format'] = 'html'
+                    if '(shp)' in resource_locator['description']:
+                        resource['format'] = 'shp'
+                    if '(ArcGIS-grid)' in resource_locator['description'] or '(ESRI ascii)' in resource_locator['description']:
+                        resource['format'] = 'arcgrid'
+                    if resource['format'] == 'audio/basic':
+                        resource['format'] = None
                     if resource['format'] == 'wms' and config.get('ckanext.spatial.harvest.validate_wms', False):
                         # Check if the service is a view service
                         test_url = url.split('?')[0] if '?' in url else url
@@ -417,11 +475,12 @@ class SpatialHarvester(HarvesterBase):
         if True:
             res_string = json.dumps(package_dict['resources'])
             if re.search(
-                    "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc",
+                    "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc|xhtml",
                     res_string, re.IGNORECASE):
                 if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict[
                                                                                                              'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
             else:
+                log.debug(res_string)
                 return None
 
         #AGLS mapping

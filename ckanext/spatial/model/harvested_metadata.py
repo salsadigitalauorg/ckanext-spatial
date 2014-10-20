@@ -153,6 +153,7 @@ class ISOElement(MappedXmlElement):
        "gco": "http://www.isotc211.org/2005/gco",
        "gmd": "http://www.isotc211.org/2005/gmd",
        "srv": "http://www.isotc211.org/2005/srv",
+       "mcp": "http://bluenet3.antcrc.utas.edu.au/mcp",
        "xlink": "http://www.w3.org/1999/xlink",
        "xsi": "http://www.w3.org/2001/XMLSchema-instance",
     }
@@ -695,6 +696,8 @@ class ISODocument(MappedXmlDocument):
         ISOElement(
             name="use-constraints",
             search_paths=[
+                "gmd:identificationInfo/mcp:MD_DataIdentification/gmd:resourceConstraints/mcp:MD_Commons/mcp:licenseLink/gmd:URL/text()",
+                "gmd:identificationInfo/mcp:MD_DataIdentification/gmd:resourceConstraints/mcp:MD_Commons/mcp:licenseName/gco:CharacterString/text()",
                 "gmd:identificationInfo/gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_Constraints/gmd:useLimitation/gco:CharacterString/text()",
                 "gmd:identificationInfo/srv:SV_ServiceIdentification/gmd:resourceConstraints/gmd:MD_Constraints/gmd:useLimitation/gco:CharacterString/text()",
             ],
