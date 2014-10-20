@@ -370,6 +370,7 @@ class SpatialHarvester(HarvesterBase):
 
         # Save responsible organization roles
         if iso_values['responsible-organisation']:
+            responsible_org = None
             parties = {}
             for party in iso_values['responsible-organisation']:
                 extras['jurisdiction'] = party['organisation-name']
@@ -380,13 +381,15 @@ class SpatialHarvester(HarvesterBase):
                     parties[party['organisation-name']] = [party['role']]
             extras['responsible-party'] = [{'name': k, 'roles': v} for k, v in parties.iteritems()]
             for k, v in parties.iteritems():
-                context = {
-                    'model': model,
-                    'session': model.Session,
-                    'user': self._get_user_name(),
-                }
-                org = self.get_org(context, k)
-                package_dict['owner_org'] = org['id']
+                if 'custodian' in v or not responsible_org:
+                    responsible_org = k
+            context = {
+                'model': model,
+                'session': model.Session,
+                'user': self._get_user_name(),
+            }
+            org = self.get_org(context, responsible_org)
+            package_dict['owner_org'] = org['id']
 
         if len(iso_values['bbox']) > 0:
             bbox = iso_values['bbox'][0]
@@ -486,6 +489,8 @@ class SpatialHarvester(HarvesterBase):
         #AGLS mapping
         if iso_values['source']:
             package_dict['url'] = iso_values['source']
+        elif 'find.ga.gov.au' in harvest_object.source.url:
+            package_dict['url'] = 'http://find.ga.gov.au/FIND/metadata-record/uuid/' + harvest_object.guid
         if iso_values['metadata-date']:
             extras['temporal_coverage'] = iso_values['metadata-date']
         if iso_values['dataset-reference-date'][0]['value']:
