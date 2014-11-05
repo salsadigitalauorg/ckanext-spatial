@@ -106,7 +106,7 @@ details about the available options:
             <field name="minx" type="float" indexed="true" stored="true" />
             <field name="miny" type="float" indexed="true" stored="true" />
         </fields>
-
+    The solr schema file is typically located at: (..)/src/ckan/ckan/config/solr/schema.xml
 
 * ``solr-spatial-field``
     This option uses the `spatial field`_ introduced in Solr 4, which allows
@@ -196,8 +196,10 @@ There are snippets already created to load the map on the left sidebar or in
 the main body of the dataset details page, but these can be easily modified to
 suit your project needs
 
-To add a map to the sidebar, add this to the dataset details page template (eg
-``myproj/ckanext/myproj/templates/package/read.html``)::
+To add a map to the sidebar, add the following block to the dataset details page template (eg
+``ckanext-myproj/ckanext/myproj/templates/package/read.html``). If your custom 
+theme is simply extending the CKAN default theme, you will need to add ``{% ckan_extends %}`` 
+to the start of your custom read.html, then continue with this::
 
     {% block secondary_content %}
       {{ super() }}
@@ -211,22 +213,16 @@ To add a map to the sidebar, add this to the dataset details page template (eg
 
 For adding the map to the main body, add this::
 
-    {% block primary_content %}
+    {% block primary_content_inner %}
 
-      <!-- ... -->
+      {{ super() }}
 
-      <article class="module prose">
+      {% set dataset_extent = h.get_pkg_dict_extra(c.pkg_dict, 'spatial', '') %}
+      {% if dataset_extent %}
+        {% snippet "spatial/snippets/dataset_map.html", extent=dataset_extent %}
+      {% endif %}
 
-        <!-- ... -->
-
-        {% set dataset_extent = h.get_pkg_dict_extra(c.pkg_dict, 'spatial', '') %}
-        {% if dataset_extent %}
-          {% snippet "spatial/snippets/dataset_map.html", extent=dataset_extent %}
-        {% endif %}
-
-      </article>
     {% endblock %}
-
 
 You need to load the ``spatial_metadata`` plugin to use these snippets.
 

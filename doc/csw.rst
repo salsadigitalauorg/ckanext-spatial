@@ -64,7 +64,7 @@ Setup
 1. Install pycsw. There are several options for this, depending on your
    server setup, check the `pycsw documentation`_.
 
-   .. note:: CKAN integration requires at least pycsw version 1.6.1. Make sure
+   .. note:: CKAN integration requires at least pycsw version 1.8.0. Make sure
              to install at least this version.
 
    The following instructions assume that you have installed CKAN via a
@@ -78,8 +78,8 @@ Setup
 
     git clone https://github.com/geopython/pycsw.git
     cd pycsw
-    # Remember to use at least pycsw 1.6.1
-    git checkout 1.6.1
+    # Remember to use at least pycsw 1.8.0
+    git checkout 1.8.0
     pip install -e .
     python setup.py build
     python setup.py install
@@ -112,7 +112,7 @@ Setup
     [repository]
     database=postgresql://ckan_default:pass@localhost/pycsw
 
-   The rest of the options are described `here <http://pycsw.org/docs/latest/configuration.html>`_.
+   The rest of the options are described `here <http://docs.pycsw.org/en/latest/configuration.html>`_.
 
 4. Setup the pycsw table. This is done with the ``ckan-pycsw`` paster command
    (Remember to have the virtualenv activated when running it)::
@@ -137,13 +137,6 @@ Setup
     cd /usr/lib/ckan/default/src/ckanext-spatial
     paster ckan-pycsw load -p /etc/ckan/default/pycsw.cfg
 
-   .. note:: If you get errors similar to this one, this is caused by
-        limitations on the pycsw model definition. This should be fixed in
-        future versions of pycsw::
-
-            ERROR: not inserted f8d48eaf-780b-40b8-a502-7a903fde5b1c Error:ERROR: value too long for type character varying(256)
-
-
    When the loading is finished, check that results are returned when visiting
    this link:
 
@@ -153,6 +146,19 @@ Setup
    in CKAN (minus import errors). If you run the command again new or udpated
    datasets will be synchronized and deleted datasets from CKAN will be removed
    from pycsw as well.
+
+Setting Service Metadata Keywords
++++++++++++++++++++++++++++++++++
+
+The CSW standard allows for administrators to set CSW service metadata. These
+values can be set in the pycsw configuration ``metadata:main`` section.  If you
+would like the CSW service metadata keywords to be reflective of the CKAN
+tags, run the following convenience command::
+
+    paster ckan-pycsw set_keywords -p /etc/ckan/default/pycsw.cfg
+
+Note that you must have privileges to write to the pycsw configuration file.
+
 
 Running it on production site
 +++++++++++++++++++++++++++++
@@ -171,7 +177,7 @@ keep CKAN and pycsw in sync, and serve pycsw with Apache + mod_wsgi like CKAN.
   This `Wikipedia page <http://en.wikipedia.org/wiki/Cron#CRON_expression>`_
   has a good overview of the crontab syntax.
 
-* To run pycsw under Apache check the pycsw `installation documentation <http://pycsw.org/docs/latest/installation.html#running-on-wsgi>`_
+* To run pycsw under Apache check the pycsw `installation documentation <http://docs.pycsw.org/en/latest/installation.html#running-on-wsgi>`_
   or follow these quick steps (they assume the paths used in previous steps):
 
   - Edit ``/etc/apache2/sites-available/ckan_default`` and add the following
@@ -254,7 +260,7 @@ The equivalent example to the one above for asking the cabailities is::
 OWSLib is the library used to actually perform the queries.
 
 .. _pycsw: http://pycsw.org 
-.. _pycsw documentation: http://pycsw.org/docs/latest/installation.html
+.. _pycsw documentation: http://docs.pycsw.org/en/latest/installation.html
 .. _package install: http://docs.ckan.org/en/latest/install-from-package.html
 .. _CSW: http://www.opengeospatial.org/standards/cat
 

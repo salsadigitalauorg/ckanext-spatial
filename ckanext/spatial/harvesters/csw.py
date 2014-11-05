@@ -22,20 +22,20 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
     '''
     implements(IHarvester)
 
-    csw=None
+    csw = None
 
     def info(self):
         return {
             'name': 'csw',
             'title': 'CSW Server',
             'description': 'A server that implements OGC\'s Catalog Service for the Web (CSW) standard'
-            }
+        }
 
 
     def get_original_url(self, harvest_object_id):
-        obj = model.Session.query(HarvestObject).\
-                                    filter(HarvestObject.id==harvest_object_id).\
-                                    first()
+        obj = model.Session.query(HarvestObject). \
+            filter(HarvestObject.id == harvest_object_id). \
+            first()
 
         parts = urlparse.urlparse(obj.source.url)
 
@@ -44,7 +44,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
             'VERSION': '2.0.2',
             'REQUEST': 'GetRecordById',
             'OUTPUTSCHEMA': 'http://www.isotc211.org/2005/gmd',
-            'OUTPUTFORMAT':'application/xml' ,
+            'OUTPUTFORMAT': 'application/xml',
             'ID': obj.guid
         }
 
@@ -76,9 +76,9 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
             self._save_gather_error('Error contacting the CSW server: %s' % e, harvest_job)
             return None
 
-        query = model.Session.query(HarvestObject.guid, HarvestObject.package_id).\
-                                    filter(HarvestObject.current==True).\
-                                    filter(HarvestObject.harvest_source_id==harvest_job.source.id)
+        query = model.Session.query(HarvestObject.guid, HarvestObject.package_id). \
+            filter(HarvestObject.current == True). \
+            filter(HarvestObject.harvest_source_id == harvest_job.source.id)
         guid_to_package_id = {}
 
         for guid, package_id in query:
@@ -86,19 +86,22 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
 
         guids_in_db = set(guid_to_package_id.keys())
 
+        # extract cql filter if any
+        cql = self.source_config.get('cql')
+
         log.debug('Starting gathering for %s' % url)
         guids_in_harvest = set()
         try:
-            for identifier in self.csw.getidentifiers(page=10, outputschema=self.output_schema()):
+            for identifier in self.csw.getidentifiers(page=100, outputschema=self.output_schema(), cql=cql):
                 try:
                     log.info('Got identifier %s from the CSW', identifier)
                     if identifier is None:
                         log.error('CSW returned identifier %r, skipping...' % identifier)
                         continue
-
-                    guids_in_harvest.add(identifier)
+                    if '{' not in identifier:
+                        guids_in_harvest.add(identifier)
                 except Exception, e:
-                    self._save_gather_error('Error for the identifier %s [%r]' % (identifier,e), harvest_job)
+                    self._save_gather_error('Error for the identifier %s [%r]' % (identifier, e), harvest_job)
                     continue
 
 
@@ -127,11 +130,11 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
             obj = HarvestObject(guid=guid, job=harvest_job,
                                 package_id=guid_to_package_id[guid],
                                 extras=[HOExtra(key='status', value='delete')])
-            ids.append(obj.id)
-            model.Session.query(HarvestObject).\
-                  filter_by(guid=guid).\
-                  update({'current': False}, False)
+            model.Session.query(HarvestObject). \
+                filter_by(guid=guid). \
+                update({'current': False}, False)
             obj.save()
+            ids.append(obj.id)
 
         if len(ids) == 0:
             self._save_gather_error('No records received from the CSW server', harvest_job)
@@ -139,7 +142,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
 
         return ids
 
-    def fetch_stage(self,harvest_object):
+    def fetch_stage(self, harvest_object):
         log = logging.getLogger(__name__ + '.CSW.fetch')
         log.debug('CswHarvester fetch_stage for object: %s', harvest_object.id)
 
@@ -152,10 +155,11 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
             return False
 
         identifier = harvest_object.guid
-	print harvest_object
+        print harvest_object
         try:
             record = self.csw.getrecordbyid([identifier], outputschema=self.output_schema())
         except Exception, e:
+            log.debug(e)
             self._save_object_error('Error getting the CSW record with GUID %s' % identifier, harvest_object)
             return False
 
@@ -172,7 +176,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
 
             harvest_object.content = content.strip()
             harvest_object.save()
-        except Exception,e:
+        except Exception, e:
             self._save_object_error('Error saving the harvest object for GUID %s [%r]' % \
                                     (identifier, e), harvest_object)
             return False

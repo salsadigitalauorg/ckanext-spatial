@@ -13,7 +13,6 @@ import hashlib
 import dateutil
 import mimetypes
 
-
 from pylons import config
 from owslib import wms
 import requests
@@ -24,12 +23,14 @@ from ckan import model
 from ckan.lib.helpers import json
 from ckan import logic
 from ckan.lib.navl.validators import not_empty
+from ckan.lib.search.index import PackageSearchIndex
 
 from ckanext.harvest.harvesters.base import HarvesterBase
 from ckanext.harvest.model import HarvestObject
 
 from ckanext.spatial.validation import Validators, all_validators
 from ckanext.spatial.model import ISODocument
+from ckanext.spatial.interfaces import ISpatialHarvester
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ def guess_standard(content):
     return 'unknown'
 
 
-def guess_resource_format(url, use_mimetypes=True):
+def guess_resource_format(url, use_mimetypes=False):
     '''
     Given a URL try to guess the best format to assign to the resource
 
@@ -90,9 +91,12 @@ def guess_resource_format(url, use_mimetypes=True):
             return resource_type
 
     file_types = {
-        'kml' : ('kml',),
+        'kml': ('kml',),
         'kmz': ('kmz',),
         'gml': ('gml',),
+        'csv': ('csv',),
+        'xls': ('xls', 'xlsx'),
+
     }
 
     for file_type, extensions in file_types.iteritems():
@@ -107,8 +111,9 @@ def guess_resource_format(url, use_mimetypes=True):
 
 
 class SpatialHarvester(HarvesterBase):
-
     _user_name = None
+
+    _site_user = None
 
     source_config = {}
 
@@ -118,7 +123,7 @@ class SpatialHarvester(HarvesterBase):
     {"type": "Polygon", "coordinates": [[[$xmin, $ymin], [$xmax, $ymin], [$xmax, $ymax], [$xmin, $ymax], [$xmin, $ymin]]]}
     ''')
 
-    ## IHarvester
+    # # IHarvester
 
     def validate_config(self, source_config):
         if not source_config:
@@ -143,14 +148,83 @@ class SpatialHarvester(HarvesterBase):
 
         return source_config
 
-    ##
+    # #
 
-    ## SpatialHarvester
+    # # SpatialHarvester
 
-    '''
-    These methods can be safely overridden by classes extending
-    SpatialHarvester
-    '''
+    organization_cache = {}
+
+    def munge_title_to_name(self, name):
+        '''Munge a package title into a package name.
+        '''
+        # convert spaces and separators
+        name = re.sub('[ .:/,]', '-', name)
+        # take out not-allowed characters
+        name = re.sub('[^a-zA-Z0-9-_]', '', name).lower()
+        # remove doubles
+        name = re.sub('---', '-', name)
+        name = re.sub('--', '-', name)
+        name = re.sub('--', '-', name)
+        # remove leading or trailing hyphens
+        name = name.strip('-')[:99]
+        return name
+
+    def get_org(self, context, organization_title):
+        organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'Geoscience Australia',
+                                      'Antarctic Climate and Ecosystems CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
+                                      'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'Geoscience Australia',
+                                      'Commonwealth Scientific and Industrial Research Organisation (CSIRO)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'CSIRO Marine and Atmospheric Research (CMAR)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Department of Industry and Investment (DII)': 'NSW Department of Primary Industries',
+                                      'Department of Natural Resources and Mines, Queensland': 'Queensland Department of Natural Resources and Mines',
+                                      'Derwent Estuary Program': 'Environment Protection Authority Tasmania',
+                                      'ECOCEAN': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'eMarine Information Infrastructure (eMII)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Emergency Services GIS': 'Department of Primary Industries, Parks, Water and Environment (Tasmania)',
+                                      'Fisheries NSW, Primary Industries': 'NSW Department of Primary Industries',
+                                      'Flinders University, School of Chemistry, Physics and Earth Sciences': 'Flinders University',
+                                      'Flinders University, School of Chemistry, Physics and Earth Sciences,': 'Flinders University',
+                                      'Flinders University, School of Chemisty, Physics and Earth Sciences': 'Flinders University',
+                                      'School of Environment, Flinders University': 'Flinders University',
+                                      'School of the Environment, Flinders University': 'Flinders University',
+                                      'IMAS, University of Tasmania': 'Institute for Marine and Antarctic Studies',
+                                      'Institute for Marine and Antarctic Studies (IMAS), University of Tasmania': 'Institute for Marine and Antarctic Studies',
+                                      'Land and Property Information': 'NSW Land and Property Information',
+                                      'Land and Property Information-NSW': 'NSW Land and Property Information',
+                                      'Marine Futures Project, The University of Western Australia (UWA)': 'University of Western Australia',
+                                      'Marine Policy and Planning Branch, Department of Environment and Conservation': 'WA Department of Parks and Wildlife',
+                                      'National Tidal Centre': 'Bureau of Meteorology',
+                                      'NIWA National Institute of Water & Atmospheric Research': 'NZ National Institute of Water & Atmospheric Research',
+                                      'NSW Department of Environment, Climate Change and Water (DECCW)': 'NSW Office of Environment and Heritage',
+                                      'DTIRIS Resources & Energy NSW': 'NSW Department of Trade and Investment, Regional Infrastructure and Services',
+                                      'Office of Environment and Heritage': 'NSW Office of Environment and Heritage',
+                                      'Office of Environment and Heritage (OEH)': 'NSW Office of Environment and Heritage',
+                                      'Ocean Technology Group, University of Sydney': 'University of Sydney',
+                                      'Royal Australian Navy Hydrography and Metoc Branch': 'Royal Australian Navy',
+                                      'Royal Australian Navy Hydrography and METOC Branch': 'Royal Australian Navy',
+                                      'SARDI Aquatic Sciences': 'South Australian Research and Development Institute',
+                                      'School of Environmental Science, Murdoch University': 'Murdoch University',
+                                      'The Australian National University (ANU)': 'Australian National University',
+                                      'The University of Sydney': 'University of Sydney',
+                                      'WA Department of Fisheries - Scientific Custodian': 'WA Department of Fisheries',
+                                      'WA Department of Fisheries - Technical Custodian': 'WA Department of Fisheries',
+                                      'Department of Transport': 'WA Department of Transport',
+                                      'Geological Survey Division, Department of Mines and Petroleum': 'WA Department of Mines and Petroleum'
+        }
+        if organization_title in organization_title_mapping:
+            organization_title = organization_title_mapping[organization_title]
+
+        organization_id = self.munge_title_to_name(organization_title).lower()
+        if organization_id not in self.organization_cache:
+            try:
+                self.organization_cache[organization_id] = p.toolkit.get_action('organization_show')(context, {
+                    'id': organization_id, 'include_datasets': False})
+            except:
+                self.organization_cache[organization_id] = p.toolkit.get_action('organization_create')(context, {
+                    'name': organization_id, 'title': organization_title})
+        return self.organization_cache[organization_id]
 
     def get_package_dict(self, iso_values, harvest_object):
         '''
@@ -158,19 +232,23 @@ class SpatialHarvester(HarvesterBase):
         package_update. See documentation on
         ckan.logic.action.create.package_create for more details
 
-        Tipically, custom harvesters would only want to add or modify the
-        extras, but the whole method can be replaced if necessary. Note that
-        if only minor modifications need to be made you can call the parent
-        method from your custom harvester and modify the output, eg:
+        Extensions willing to modify the dict should do so implementing the
+        ISpatialHarvester interface
 
-            class MyHarvester(SpatialHarvester):
+            import ckan.plugins as p
+            from ckanext.spatial.interfaces import ISpatialHarvester
 
-                def get_package_dict(self, iso_values, harvest_object):
+            class MyHarvester(p.SingletonPlugin):
 
-                    package_dict = super(MyHarvester, self).get_package_dict(iso_values, harvest_object)
+                p.implements(ISpatialHarvester, inherit=True)
 
-                    package_dict['extras']['my-custom-extra-1'] = 'value1'
-                    package_dict['extras']['my-custom-extra-2'] = 'value2'
+                def get_package_dict(self, context, data_dict):
+
+                    package_dict = data_dict['package_dict']
+
+                    package_dict['extras'].append(
+                        {'key': 'my-custom-extra', 'value': 'my-custom-value'}
+                    )
 
                     return package_dict
 
@@ -189,9 +267,10 @@ class SpatialHarvester(HarvesterBase):
 
         tags = []
         if 'tags' in iso_values:
-            for tag in iso_values['tags']:
-                tag = tag[:50] if len(tag) > 50 else tag
-                tags.append({'name': tag})
+            for tagname in iso_values['tags']:
+                for tag in tagname.replace(' - ','|').split("|"):
+                    tag = tag[:50] if len(tag) > 50 else tag
+                    tags.append({'name': tag.strip()})
 
         package_dict = {
             'title': iso_values['title'],
@@ -213,7 +292,8 @@ class SpatialHarvester(HarvesterBase):
             if not name:
                 name = self._gen_new_name(str(iso_values['guid']))
             if not name:
-                raise Exception('Could not generate a unique name from the title or the GUID. Please choose a more unique title.')
+                raise Exception(
+                    'Could not generate a unique name from the title or the GUID. Please choose a more unique title.')
             package_dict['name'] = name
         else:
             package_dict['name'] = package.name
@@ -237,10 +317,10 @@ class SpatialHarvester(HarvesterBase):
             'frequency-of-update',
             'spatial-data-service-type',
             'source',
-	    "dateStamp",
+            "dateStamp",
             "metadataStandard",
             "metadataStandardVersion",
-       ]:
+        ]:
             extras[name] = iso_values[name]
 
         if len(iso_values.get('progress', [])):
@@ -252,7 +332,6 @@ class SpatialHarvester(HarvesterBase):
             extras['resource-type'] = iso_values['resource-type'][0]
         else:
             extras['resource-type'] = ''
-
 
         extras['licence'] = iso_values.get('use-constraints', '')
 
@@ -269,10 +348,11 @@ class SpatialHarvester(HarvesterBase):
                 extras['licence_url'] = license_url_extracted
 
         extras['access_constraints'] = iso_values.get('limitations-on-public-access', '')
-        if len(extras['access_constraints']) and "Creative Commons Attribution 3.0 Australia Licence" in extras['access_constraints']:
-		extras['licence'] = 'cc-by'
-		package_dict['license_id'] = 'cc-by'
-	        extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
+        if len(extras['access_constraints']) and "Creative Commons Attribution 3.0 Australia Licence" in extras[
+            'access_constraints']:
+            extras['licence'] = 'cc-by'
+            package_dict['license_id'] = 'cc-by'
+            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
 
         # Grpahic preview
         browse_graphic = iso_values.get('browse-graphic')
@@ -284,22 +364,32 @@ class SpatialHarvester(HarvesterBase):
             if browse_graphic.get('type'):
                 extras['graphic-preview-type'] = browse_graphic.get('type')
 
-
         for key in ['temporal-extent-begin', 'temporal-extent-end']:
             if len(iso_values[key]) > 0:
                 extras[key] = iso_values[key][0]
 
         # Save responsible organization roles
         if iso_values['responsible-organisation']:
+            responsible_org = None
             parties = {}
             for party in iso_values['responsible-organisation']:
-		extras['jurisdiction'] = party['organisation-name']
+                extras['jurisdiction'] = party['organisation-name']
                 if party['organisation-name'] in parties:
                     if not party['role'] in parties[party['organisation-name']]:
                         parties[party['organisation-name']].append(party['role'])
                 else:
                     parties[party['organisation-name']] = [party['role']]
             extras['responsible-party'] = [{'name': k, 'roles': v} for k, v in parties.iteritems()]
+            for k, v in parties.iteritems():
+                if 'custodian' in v or not responsible_org:
+                    responsible_org = k
+            context = {
+                'model': model,
+                'session': model.Session,
+                'user': self._get_user_name(),
+            }
+            org = self.get_org(context, responsible_org)
+            package_dict['owner_org'] = org['id']
 
         if len(iso_values['bbox']) > 0:
             bbox = iso_values['bbox'][0]
@@ -315,7 +405,7 @@ class SpatialHarvester(HarvesterBase):
                 ymax = float(bbox['north'])
             except ValueError, e:
                 self._save_object_error('Error parsing bounding box value: {0}'.format(str(e)),
-                                    harvest_object, 'Import')
+                                        harvest_object, 'Import')
             else:
                 # Construct a GeoJSON extent so ckanext-spatial can register the extent geometry
 
@@ -326,7 +416,7 @@ class SpatialHarvester(HarvesterBase):
                         x=xmin, y=ymin
                     )
                     self._save_object_error('Point extent defined instead of polygon',
-                                     harvest_object, 'Import')
+                                            harvest_object, 'Import')
                 else:
                     extent_string = self.extent_template.substitute(
                         xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax
@@ -337,15 +427,33 @@ class SpatialHarvester(HarvesterBase):
         else:
             log.debug('No spatial extent defined for this object')
 
-        resource_locators = iso_values.get('resource-locator', []) +\
-            iso_values.get('resource-locator-identification', [])
+        resource_locators = iso_values.get('resource-locator', []) + \
+                            iso_values.get('resource-locator-identification', [])
 
         if len(resource_locators):
             for resource_locator in resource_locators:
-                url = resource_locator.get('url', '').strip()
-                if url and not url.startswith('http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0'):
+                url = resource_locator.get('url')
+                if url and url.startswith('http') and not url.startswith(
+                        'http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1297.0') \
+                        and url not in ['http://www.abs.gov.au/AUSSTATS/abs@.nsf/DetailsPage/1297.01998?OpenDocument','http://www.aodc.gov.au/','http://gcmd.nasa.gov/index.html','http://aims.gov.au','http://www.aims.gov.au','http://www.aims.gov.au/adc']:
+                    url = url.strip()
                     resource = {}
                     resource['format'] = guess_resource_format(url)
+
+                    if 'name' not in resource and 'fname' in url:
+                        fname = re.compile('fname=(.*)&')
+                        resource['name'] = fname.search(url).group(1)
+                        resource['format'] = guess_resource_format(resource['name'])
+                    if 'kml' in url or '(kml)' in resource_locator['description']:
+                        resource['format'] = 'kml'
+                    if 'xhtml' in url:
+                        resource['format'] = 'html'
+                    if '(shp)' in resource_locator['description']:
+                        resource['format'] = 'shp'
+                    if '(ArcGIS-grid)' in resource_locator['description'] or '(ESRI ascii)' in resource_locator['description']:
+                        resource['format'] = 'arcgrid'
+                    if resource['format'] == 'audio/basic':
+                        resource['format'] = None
                     if resource['format'] == 'wms' and config.get('ckanext.spatial.harvest.validate_wms', False):
                         # Check if the service is a view service
                         test_url = url.split('?')[0] if '?' in url else url
@@ -356,56 +464,42 @@ class SpatialHarvester(HarvesterBase):
                     resource.update(
                         {
                             'url': url,
-                            'name': resource_locator.get('name') or p.toolkit._('Unnamed resource'),
-                            'description': resource_locator.get('description') or  '',
+                            'name': resource.get('name') or resource_locator.get('name') or resource_locator.get(
+                                'description') or p.toolkit._(
+                                'Unnamed resource'),
+                            'description': (resource_locator.get('description') if resource_locator.get(
+                                'name') else None) or '',
                             'resource_locator_protocol': resource_locator.get('protocol') or '',
                             'resource_locator_function': resource_locator.get('function') or '',
                         })
                     package_dict['resources'].append(resource)
 
-	# detection of 0 resources
-	if iso_values['source'] and 'ga.gov.au' in iso_values['source']:
-		res_string = json.dumps(package_dict['resources']) 
-		if re.search("kml|shp|shapefile|xls|csv|MapInfo|ecw|wms|wfs|pGDB|tab\\.|\\.dat|misc",res_string,re.IGNORECASE):
-			package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
-		else:
-			# exclude
-			log.debug('Not machine readable')
-			'''res_urls = []
-			if len( package_dict['resources']) == 0:
-				 res_urls.append(iso_values['title'])
-				 package_dict['resources'].append({'url': iso_values['source'], 'name': iso_values['title'], 'package_id': 'geoscience-australia-resources',
-					 "description": "Please note, this dataset is not freely available for download. We have included it on the data.gov.au index for discoverability purposes. You can purchase it at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html \n\n" + iso_values['abstract']})
-			else:
-				for resource in package_dict['resources']:
-					resource['name'] = iso_values['title']
-					resource['package_id'] = 'geoscience-australia-resources'
-					if 'shp' in resource['url']:
-						resource['format'] = 'shp'
-					res_urls.append( resource['url'])
-			context = {'model': model, 'session': model.Session, 'user': self._get_user_name()}
-		        package =  p.toolkit.get_action('package_show')(context,{'id':'geoscience-australia-resources'})
-			for resource in package['resources']:
-				if resource['url'] in res_urls:
-					for new_resource in package_dict['resources']:
-						if  resource['url'] == new_resource['url']:
-							package_dict['resources'].remove(new_resource)
-			for new_resource in package_dict['resources']:
-				p.toolkit.get_action('resource_create')(context, new_resource)'''
-			return None
-			
-	#AGLS mapping
-	if iso_values['source']:
-		package_dict['url'] = iso_values['source']
-	if iso_values['metadata-date']:
-		extras['temporal_coverage'] = iso_values['metadata-date']
-	if iso_values['dataset-reference-date'][0]['value']:
-		extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
-	if iso_values['frequency-of-update']:
-		extras['update_freq'] = iso_values['frequency-of-update']
-	if iso_values['contact-email']:
-		extras['contact_point'] =  iso_values['contact-email']
-	extras['data_state'] = 'inactive'
+        # detection of 0 resources
+        if True:
+            res_string = json.dumps(package_dict['resources'])
+            if re.search(
+                    "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc|xhtml",
+                    res_string, re.IGNORECASE):
+                if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict[
+                                                                                                             'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+            else:
+                log.debug(res_string)
+                return None
+
+        #AGLS mapping
+        if iso_values['source']:
+            package_dict['url'] = iso_values['source']
+        elif 'find.ga.gov.au' in harvest_object.source.url:
+            package_dict['url'] = 'http://find.ga.gov.au/FIND/metadata-record/uuid/' + harvest_object.guid
+        if iso_values['metadata-date']:
+            extras['temporal_coverage'] = iso_values['metadata-date']
+        if iso_values['dataset-reference-date'][0]['value']:
+            extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
+        if iso_values['frequency-of-update']:
+            extras['update_freq'] = iso_values['frequency-of-update']
+        if iso_values['contact-email']:
+            extras['contact_point'] = iso_values['contact-email']
+        extras['data_state'] = 'inactive'
 
         extras_as_dict = []
         for key, value in extras.iteritems():
@@ -420,34 +514,18 @@ class SpatialHarvester(HarvesterBase):
 
     def transform_to_iso(self, original_document, original_format, harvest_object):
         '''
-        Transforms an XML document to ISO 19139
-
-        This method will be only called from the import stage if the
-        harvest_object content is null and original_document and
-        original_format harvest object extras exist (eg if an FGDC document
-        was harvested).
-
-        In that case, this method should do the necessary to provide an
-        ISO 1939 like document, otherwise the import process will stop.
-
-
-        :param original_document: Original XML document
-        :type original_document: string
-        :param original_format: Original format (eg 'fgdc')
-        :type original_format: string
-        :param harvest_object: HarvestObject domain object (with access to
-            job and source objects)
-        :type harvest_object: HarvestObject
-
-        :returns: An ISO 19139 document or None if the transformation was not
-            successful
-        :rtype: string
-
+        DEPRECATED: Use the transform_to_iso method of the ISpatialHarvester
+        interface
         '''
-
+        self.__base_transform_to_iso_called = True
         return None
 
     def import_stage(self, harvest_object):
+        context = {
+            'model': model,
+            'session': model.Session,
+            'user': self._get_user_name(),
+        }
 
         log = logging.getLogger(__name__ + '.import')
         log.debug('Import stage for harvest object: %s', harvest_object.id)
@@ -465,14 +543,15 @@ class SpatialHarvester(HarvesterBase):
 
         # Get the last harvested object (if any)
         previous_object = model.Session.query(HarvestObject) \
-                          .filter(HarvestObject.guid==harvest_object.guid) \
-                          .filter(HarvestObject.current==True) \
-                          .first()
+            .filter(HarvestObject.guid == harvest_object.guid) \
+            .filter(HarvestObject.current == True) \
+            .first()
 
         if status == 'delete':
             # Delete package
-            context = {'model': model, 'session': model.Session, 'user': self._get_user_name()}
-
+            context.update({
+                'ignore_auth': True,
+            })
             p.toolkit.get_action('package_delete')(context, {'id': harvest_object.package_id})
             log.info('Deleted package {0} with guid {1}'.format(harvest_object.package_id, harvest_object.guid))
 
@@ -482,7 +561,16 @@ class SpatialHarvester(HarvesterBase):
         original_document = self._get_object_extra(harvest_object, 'original_document')
         original_format = self._get_object_extra(harvest_object, 'original_format')
         if original_document and original_format:
+            #DEPRECATED use the ISpatialHarvester interface method
+            self.__base_transform_to_iso_called = False
             content = self.transform_to_iso(original_document, original_format, harvest_object)
+            if not self.__base_transform_to_iso_called:
+                log.warn('Deprecation warning: calling transform_to_iso directly is deprecated. ' +
+                         'Please use the ISpatialHarvester interface method instead.')
+
+            for harvester in p.PluginImplementations(ISpatialHarvester):
+                content = harvester.transform_to_iso(original_document, original_format, harvest_object)
+
             if content:
                 harvest_object.content = content
             else:
@@ -490,7 +578,8 @@ class SpatialHarvester(HarvesterBase):
                 return False
         else:
             if harvest_object.content is None:
-                self._save_object_error('Empty content for object {0}'.format(harvest_object.id), harvest_object, 'Import')
+                self._save_object_error('Empty content for object {0}'.format(harvest_object.id), harvest_object,
+                                        'Import')
                 return False
 
             # Validate ISO document
@@ -498,14 +587,17 @@ class SpatialHarvester(HarvesterBase):
             if not is_valid:
                 # If validation errors were found, import will stop unless
                 # configuration per source or per instance says otherwise
-                continue_import = p.toolkit.asbool(config.get('ckanext.spatial.harvest.continue_on_validation_errors', False)) or \
-                    self.source_config.get('continue_on_validation_errors')
+                continue_import = p.toolkit.asbool(
+                    config.get('ckanext.spatial.harvest.continue_on_validation_errors', False)) or \
+                                  self.source_config.get('continue_on_validation_errors')
                 if not continue_import:
                     return False
 
         # Parse ISO document
         try:
-            iso_values = ISODocument(harvest_object.content).read_values()
+
+            iso_parser = ISODocument(harvest_object.content)
+            iso_values = iso_parser.read_values()
         except Exception, e:
             self._save_object_error('Error parsing ISO document for object {0}: {1}'.format(harvest_object.id, str(e)),
                                     harvest_object, 'Import')
@@ -522,12 +614,12 @@ class SpatialHarvester(HarvesterBase):
             # First make sure there already aren't current objects
             # with the same guid
             existing_object = model.Session.query(HarvestObject.id) \
-                            .filter(HarvestObject.guid==iso_guid) \
-                            .filter(HarvestObject.current==True) \
-                            .first()
+                .filter(HarvestObject.guid == iso_guid) \
+                .filter(HarvestObject.current == True) \
+                .first()
             if existing_object:
                 self._save_object_error('Object {0} already has this guid {1}'.format(existing_object.id, iso_guid),
-                        harvest_object, 'Import')
+                                        harvest_object, 'Import')
                 return False
 
             harvest_object.guid = iso_guid
@@ -545,27 +637,33 @@ class SpatialHarvester(HarvesterBase):
             metadata_modified_date = dateutil.parser.parse(iso_values['metadata-date'], ignoretz=True)
         except ValueError:
             self._save_object_error('Could not extract reference date for object {0} ({1})'
-                        .format(harvest_object.id, iso_values['metadata-date']), harvest_object, 'Import')
+                                    .format(harvest_object.id, iso_values['metadata-date']), harvest_object, 'Import')
             return False
 
         harvest_object.metadata_modified_date = metadata_modified_date
         harvest_object.add()
 
+
         # Build the package dict
         package_dict = self.get_package_dict(iso_values, harvest_object)
+        for harvester in p.PluginImplementations(ISpatialHarvester):
+            package_dict = harvester.get_package_dict(context, {
+                'package_dict': package_dict,
+                'iso_values': iso_values,
+                'xml_tree': iso_parser.xml_tree,
+                'harvest_object': harvest_object,
+            })
         if not package_dict:
             log.error('No package dict returned, aborting import for object {0}'.format(harvest_object.id))
             return False
 
         # Create / update the package
+        context.update({
+            'extras_as_string': True,
+            'api_version': '2',
+            'return_id_only': True})
 
-        context = {'model': model,
-                   'session': model.Session,
-                   'user': self._get_user_name(),
-                   'extras_as_string': True,
-                   'api_version': '2',
-                   'return_id_only': True}
-        if context['user'] == self._site_user['name']:
+        if self._site_user and context['user'] == self._site_user['name']:
             context['ignore_auth'] = True
 
 
@@ -606,7 +704,7 @@ class SpatialHarvester(HarvesterBase):
         elif status == 'change':
 
             # Check if the modified date is more recent
-            if not self.force_import and harvest_object.metadata_modified_date <= previous_object.metadata_modified_date:
+            if not self.force_import and previous_object and harvest_object.metadata_modified_date <= previous_object.metadata_modified_date:
 
                 # Assign the previous job id to the new object to
                 # avoid losing history
@@ -615,6 +713,25 @@ class SpatialHarvester(HarvesterBase):
 
                 # Delete the previous object to avoid cluttering the object table
                 previous_object.delete()
+
+                # Reindex the corresponding package to update the reference to the
+                # harvest object
+                if ((config.get('ckanext.spatial.harvest.reindex_unchanged', True) != 'False'
+                     or self.source_config.get('reindex_unchanged') != 'False')
+                    and harvest_object.package_id):
+                    context.update({'validate': False, 'ignore_auth': True})
+                    try:
+                        package_dict = logic.get_action('package_show')(context,
+                                                                        {'id': harvest_object.package_id})
+                    except p.toolkit.ObjectNotFound:
+                        pass
+                    else:
+                        for extra in package_dict.get('extras', []):
+                            if extra['key'] == 'harvest_object_id':
+                                extra['value'] = harvest_object.id
+                        if package_dict:
+                            package_index = PackageSearchIndex()
+                            package_index.index_package(package_dict)
 
                 log.info('Document with GUID %s unchanged, skipping...' % (harvest_object.guid))
             else:
@@ -633,6 +750,7 @@ class SpatialHarvester(HarvesterBase):
         model.Session.commit()
 
         return True
+
     ##
 
     def _is_wms(self, url):
@@ -669,6 +787,8 @@ class SpatialHarvester(HarvesterBase):
         if config_str:
             self.source_config = json.loads(config_str)
             log.debug('Using config: %r', self.source_config)
+        else:
+            self.source_config = {}
 
     def _get_validator(self):
         '''
@@ -691,6 +811,14 @@ class SpatialHarvester(HarvesterBase):
             else:
                 profiles = DEFAULT_VALIDATOR_PROFILES
             self._validator = Validators(profiles=profiles)
+
+            # Add any custom validators from extensions
+            for plugin_with_validators in p.PluginImplementations(ISpatialHarvester):
+                custom_validators = plugin_with_validators.get_validators()
+                for custom_validator in custom_validators:
+                    if custom_validator not in all_validators:
+                        self._validator.add_validator(custom_validator)
+
         return self._validator
 
     def _get_user_name(self):
@@ -709,7 +837,11 @@ class SpatialHarvester(HarvesterBase):
         if self._user_name:
             return self._user_name
 
-        self._site_user = p.toolkit.get_action('get_site_user')({'model': model, 'ignore_auth': True}, {})
+        context = {'model': model,
+                   'ignore_auth': True,
+                   'defer_commit': True,  # See ckan/ckan#1714
+        }
+        self._site_user = p.toolkit.get_action('get_site_user')(context, {})
 
         config_user_name = config.get('ckanext.spatial.harvest.user_name')
         if config_user_name:
@@ -781,7 +913,8 @@ class SpatialHarvester(HarvesterBase):
 
         valid, profile, errors = validator.is_valid(xml)
         if not valid:
-            log.error('Validation errors found using profile {0} for object with GUID {1}'.format(profile, harvest_object.guid))
+            log.error('Validation errors found using profile {0} for object with GUID {1}'.format(profile,
+                                                                                                  harvest_object.guid))
             for error in errors:
                 self._save_object_error(error[0], harvest_object, 'Validation', line=error[1])
 

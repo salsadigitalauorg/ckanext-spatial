@@ -94,8 +94,8 @@ class CswService(OwsService):
         return [self._xmd(r) for r in csw.records.values()]
 
     def getidentifiers(self, qtype=None, typenames="csw:Record", esn="brief",
-                       keywords=[], limit=None, page=10, outputschema="gmd",
-                       startposition=0, **kw):
+                       keywords=[], limit=None, page=100, outputschema="gmd",
+                       startposition=0, cql=None, **kw):
         from owslib.csw import namespaces
         constraints = []
         csw = self._ows(**kw)
@@ -110,6 +110,7 @@ class CswService(OwsService):
             "startposition": startposition,
             "maxrecords": page,
             "outputschema": namespaces[outputschema],
+            "cql":cql,
             }
         i = 0
         matches = 0
@@ -155,6 +156,7 @@ class CswService(OwsService):
         # Ordinary Python version's don't support the metadata argument
         log.info('Making CSW request: getrecordbyid %r %r', ids, kwa)
         csw.getrecordbyid(ids, **kwa)
+        log.info('done %r %r', ids, kwa)
         print csw.request
         if csw.exceptionreport:
             err = 'Error getting record by id: %r' % \
@@ -178,7 +180,13 @@ class CswService(OwsService):
                 record["xml"] = etree.tostring(mdtree, pretty_print=True, encoding=unicode)
             except AssertionError:
                 record["xml"] = etree.tostring(md, pretty_print=True, encoding=unicode)
-
+        # Australian spatial format hack
+        if record["xml"] is None:
+            mdalt = etree.tostring(csw._exml, pretty_print=True, encoding=unicode).replace('mcp:','gmd:').replace('http://bluenet3.antcrc.utas.edu.au/mcp/ http://bluenet3.antcrc.utas.edu.au/mcp/schema.xsd&#10;&#9;&#9;&#9;','')
+            #print mdalt
+            mdtree = etree.fromstring(mdalt).find("{http://www.isotc211.org/2005/gmd}MD_Metadata")
+            record["xml"] = etree.tostring(mdtree, pretty_print=True, encoding=unicode)
+            #print record["xml"]
         record["xml"] = '<?xml version="1.0" encoding="UTF-8"?>\n' + record["xml"]
         record["tree"] = mdtree
         return record
