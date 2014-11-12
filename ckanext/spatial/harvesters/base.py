@@ -353,7 +353,11 @@ class SpatialHarvester(HarvesterBase):
             extras['licence'] = 'cc-by'
             package_dict['license_id'] = 'cc-by'
             extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
-
+        commons = iso_values.get('creative-commons', '')
+        if commons and ("Attribution" in commons[0] or 'http://creativecommons.org/licenses/by/' in commons[0]):
+            extras['licence'] = 'cc-by'
+            package_dict['license_id'] = 'cc-by'
+            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
         # Grpahic preview
         browse_graphic = iso_values.get('browse-graphic')
         if browse_graphic:
