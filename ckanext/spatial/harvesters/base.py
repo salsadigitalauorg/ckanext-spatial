@@ -170,11 +170,11 @@ class SpatialHarvester(HarvesterBase):
         return name
 
     def get_org(self, context, organization_title):
-        organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'Geoscience Australia',
+        organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'GeoscienceAustralia',
                                       'Antarctic Climate and Ecosystems CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
-                                      'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'Geoscience Australia',
+                                      'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'GeoscienceAustralia',
                                       'Commonwealth Scientific and Industrial Research Organisation (CSIRO)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'CSIRO Marine and Atmospheric Research (CMAR)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Department of Industry and Investment (DII)': 'NSW Department of Primary Industries',
