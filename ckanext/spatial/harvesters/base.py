@@ -174,7 +174,10 @@ class SpatialHarvester(HarvesterBase):
                                       'Antarctic Climate and Ecosystems CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
+                                      'AU/AADC > Australian Antarctic Data Centre, Australia': 'australianantarcticdivision',
+                                      'ICSU/SCAR/SCAR-MARBIN/ANTABIF > Antarctic Biodiversity Information Facility, Marine Biodiversity Information Network, Scientific Committee on Antarctic Research, International Council for Science': 'australianantarcticdivision',
                                       'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'GeoscienceAustralia',
+                                      'AU/GA > Geoscience Australia, Australia': 'GeoscienceAustralia',
                                       'Commonwealth Scientific and Industrial Research Organisation (CSIRO)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'CSIRO Marine and Atmospheric Research (CMAR)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Department of Industry and Investment (DII)': 'NSW Department of Primary Industries',
@@ -195,7 +198,8 @@ class SpatialHarvester(HarvesterBase):
                                       'Land and Property Information-NSW': 'NSW Land and Property Information',
                                       'Marine Futures Project, The University of Western Australia (UWA)': 'University of Western Australia',
                                       'Marine Policy and Planning Branch, Department of Environment and Conservation': 'WA Department of Parks and Wildlife',
-                                      'National Tidal Centre': 'Bureau of Meteorology',
+                                      'National Tidal Centre': 'bureauofmeteorology',
+                                      'AU/BOM/TARO > Tasmanian-Antarctica Regional Office, Bureau of Meteorology, Australia': 'bureauofmeteorology',
                                       'NIWA National Institute of Water & Atmospheric Research': 'NZ National Institute of Water & Atmospheric Research',
                                       'NSW Department of Environment, Climate Change and Water (DECCW)': 'NSW Office of Environment and Heritage',
                                       'DTIRIS Resources & Energy NSW': 'NSW Department of Trade and Investment, Regional Infrastructure and Services',
@@ -348,12 +352,26 @@ class SpatialHarvester(HarvesterBase):
                 extras['licence_url'] = license_url_extracted
 
         extras['access_constraints'] = iso_values.get('limitations-on-public-access', '')
-        if len(extras['access_constraints']) and "Creative Commons Attribution 3.0 Australia Licence" in extras[
-            'access_constraints']:
+        if len(extras['access_constraints']) and ("Creative Commons Attribution 3.0 Australia Licence" in ''.join(extras[
+            'access_constraints']) or 'http://creativecommons.org/licenses/by/' in ''.join(extras[
+            'access_constraints'])) :
             extras['licence'] = 'cc-by'
             package_dict['license_id'] = 'cc-by'
             extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
-
+        
+        extras['use_constraints'] = iso_values.get('use-constraints', '')
+        if len(extras['use_constraints']) and ("Creative Commons Attribution" in ''.join(extras[
+            'use_constraints']) or 'http://creativecommons.org/licenses/by/' in ''.join(extras[
+            'use_constraints'])) :
+            extras['licence'] = 'cc-by'
+            package_dict['license_id'] = 'cc-by'
+            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
+        
+        commons = iso_values.get('creative-commons', '')
+        if commons and ("Attribution" in commons[0] or 'http://creativecommons.org/licenses/by/' in commons[0]):
+            extras['licence'] = 'cc-by'
+            package_dict['license_id'] = 'cc-by'
+            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
         # Grpahic preview
         browse_graphic = iso_values.get('browse-graphic')
         if browse_graphic:
@@ -448,9 +466,17 @@ class SpatialHarvester(HarvesterBase):
                         resource['format'] = 'kml'
                     if 'xhtml' in url:
                         resource['format'] = 'html'
-                    if '(shp)' in resource_locator['description']:
+                    if 'WMS applications' in resource_locator['description']:
+                        resource['format'] = 'wms'
+                    if 'WFS operations' in resource_locator['description']:
+                        resource['format'] = 'wfs'
+                    if 'xcel ' in resource_locator['description']:
+                        resource['format'] = 'xls'
+                    if 'csv ' in resource_locator['description'] or 'CSV ' in resource_locator['description']:
+                        resource['format'] = 'csv'
+                    if '(shp)' in resource_locator['description'] or 'shapefile' in resource_locator['description']:
                         resource['format'] = 'shp'
-                    if '(ArcGIS-grid)' in resource_locator['description'] or '(ESRI ascii)' in resource_locator['description']:
+                    if '(ArcGIS-grid)' in resource_locator['description'] or '(ESRI ascii)' in resource_locator['description'] or 'ArcInfo ascii' in resource_locator['description']:
                         resource['format'] = 'arcgrid'
                     if resource['format'] == 'audio/basic':
                         resource['format'] = None

@@ -73,7 +73,7 @@ this.ckan.module('wmspreview', function (jQuery, _) {
         var server = preload_resource.url;
         var wmsUrl = cleanUrl(server);
         var proxied_server = preload_resource.proxy_url;
-        var capabilitiesUrl = getCapabilitiesUrl(proxied_server);
+        var capabilitiesUrl = getCapabilitiesUrl(wmsUrl);
 
         var self = this;
         $.get(capabilitiesUrl,function(data){
