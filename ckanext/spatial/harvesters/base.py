@@ -394,11 +394,12 @@ class SpatialHarvester(HarvesterBase):
                 extras[key] = iso_values[key][0]
 
         # Save responsible organization roles
+        extras['jurisdiction'] = 'Commonwealth of Australia'
         if iso_values['responsible-organisation']:
             responsible_org = None
             parties = {}
             for party in iso_values['responsible-organisation']:
-                extras['jurisdiction'] = party['organisation-name']
+
                 if party['organisation-name'] in parties:
                     if not party['role'] in parties[party['organisation-name']]:
                         parties[party['organisation-name']].append(party['role'])
@@ -487,12 +488,38 @@ class SpatialHarvester(HarvesterBase):
                         resource['format'] = 'arcgrid'
                     if resource['format'] == 'audio/basic':
                         resource['format'] = None
-                    if resource['format'] == 'wms' and config.get('ckanext.spatial.harvest.validate_wms', False):
+                    if resource['format'] == 'wms':
+                        if 'name' in resource and ':' in resource['name'] and ' ' not in resource['name']:
+                            resource['wms_layer'] = resource['name']
                         # Check if the service is a view service
                         test_url = url.split('?')[0] if '?' in url else url
-                        if self._is_wms(test_url):
-                            resource['verified'] = True
-                            resource['verified_date'] = datetime.now().isoformat()
+                        try:
+                            capabilities_url = wms.WMSCapabilitiesReader().capabilities_url(test_url)
+                            res = urllib2.urlopen(capabilities_url, None, 10)
+                            xml = res.read()
+
+                            s = wms.WebMapService(test_url, xml=xml)
+                            if isinstance(s.contents, dict) and s.contents != {}:
+                                resource['verified'] = True
+                                resource['verified_date'] = datetime.now().isoformat()
+                                layers = list(s.contents)
+                                if len(layers) == 1:
+                                    resource['wms_layer'] = layers[0]
+                                    bbox_values = list(s.contents[layers[0]].boundingBoxWGS84)
+                                    bbox = {}
+                                    bbox['minx'] = float(bbox_values[0])
+                                    bbox['miny'] = float(bbox_values[1])
+                                    bbox['maxx'] = float(bbox_values[2])
+                                    bbox['maxy'] = float(bbox_values[3])
+                                    # Construct a GeoJSON extent so ckanext-spatial can register the extent geometry
+                                    extent_string = self.extent_template.substitute(
+                                        xmin=bbox['minx'], ymin=bbox['miny'], xmax=bbox['maxx'], ymax=bbox['maxy']
+                                    )
+                                    extras['spatial'] = extent_string.strip()
+                                    extras['spatial_coverage'] = extras['spatial']
+                        except Exception, e:
+                                    log.error('WMS check for %s failed with exception: %s' % (url, str(e)))
+
 
                     resource.update(
                         {
