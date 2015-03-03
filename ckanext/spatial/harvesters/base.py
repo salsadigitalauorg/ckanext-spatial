@@ -170,12 +170,13 @@ class SpatialHarvester(HarvesterBase):
         return name
 
     def get_org(self, context, organization_title):
-        organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'Geoscience Australia',
+        organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'GeoscienceAustralia',
                                       'Antarctic Climate and Ecosystems CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
                                       'AU/AADC > Australian Antarctic Data Centre, Australia': 'australianantarcticdivision',
                                       'ICSU/SCAR/SCAR-MARBIN/ANTABIF > Antarctic Biodiversity Information Facility, Marine Biodiversity Information Network, Scientific Committee on Antarctic Research, International Council for Science': 'australianantarcticdivision',
+<<<<<<< HEAD
                                       'UQ/ENTOX > National Reserach Centre for Environmental Toxicology, University of Queensland, Australia': 'australianantarcticdivision',
                                       'WDC/WOUDC, TORONTO > World Data Center for Ozone and Ultraviolet Radiation, Toronto': 'australianantarcticdivision',
                                       'WDC/STS/IPS, SYDNEY > Ionospheric Prediction Service, World Data Centre for Solar Terrestrial Science, Sydney': 'australianantarcticdivision',
@@ -183,8 +184,8 @@ class SpatialHarvester(HarvesterBase):
                                        'UCAR/NCAR/HAO/CEDAR > Coupling, Energetics and Dynamics of Atmospheric Regions, High Altitude Observatory, National Center for Atmospheric Research, UCAR': 'australianantarcticdivision',
                                        'NASA/GSFC/SSED/CDDIS > Crustal Dynamics Data Information System, Solar System Exploration Division, Goddard Space Flight Center, NASA': 'australianantarcticdivision',
                                        'DOE/ORNL/ESD/CDIAC > Carbon Dioxide Information Analysis Center, Environmental Sciences Division, Oak Ridge National Laboratory, U. S. Department of Energy': 'australianantarcticdivision',
-                                      'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'Geoscience Australia',
-                                      'AU/GA > Geoscience Australia, Australia': 'Geoscience Australia',
+                                      'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'GeoscienceAustralia',
+                                      'AU/GA > Geoscience Australia, Australia': 'GeoscienceAustralia',
                                       'Commonwealth Scientific and Industrial Research Organisation (CSIRO)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'CSIRO Marine and Atmospheric Research (CMAR)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Department of Industry and Investment (DII)': 'NSW Department of Primary Industries',
