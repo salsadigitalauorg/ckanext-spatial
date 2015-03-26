@@ -14,7 +14,6 @@ import dateutil
 import mimetypes
 
 from pylons import config
-from owslib import wms
 import requests
 from lxml import etree
 
@@ -171,12 +170,23 @@ class SpatialHarvester(HarvesterBase):
 
     def get_org(self, context, organization_title):
         organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'GeoscienceAustralia',
-                                      'Antarctic Climate and Ecosystems CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
-                                      'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Antarctic Climate and Ecosystems Cooperative Research Centre (ACE CRC)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'Australian Bureau of Meteorology (BOM)': 'bureauofmeteorology',
+                                      'Australian Electoral Commission (AEC)': 'australianelectoralcommission',
+                                        'Australian Government Department of Sustainability, Environment, Water, Population and Communities': 'departmentofenvironment',
+        'Australian Government Department of the Environment': 'departmentofenvironment',
+        'Australian Governement Department of the Environment and Water Resources': 'departmentofenvironment',
+                                      'Department of the Environment': 'departmentofenvironment',
+        'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
+                                        'WDC/WOUDC, TORONTO > World Data Center for Ozone and Ultraviolet Radiation, Toronto': 'australianantarcticdivision',
+                                        'UCAR/NCAR/HAO/CEDAR > Coupling, Energetics and Dynamics of Atmospheric Regions, High Altitude Observatory, National Center for Atmospheric Research, UCAR': 'australianantarcticdivision',
+                                        'UQ/ENTOX > National Reserach Centre for Environmental Toxicology, University of Queensland, Australia': 'australianantarcticdivision',
+                                        'WDC/GEOMAGNETISM, EDINBURGH > World Data Center for Geomagnetism, Edinburgh': 'australianantarcticdivision',
+                                        'WDC/STS/IPS, SYDNEY > Ionospheric Prediction Service, World Data Centre for Solar Terrestrial Science, Sydney': 'australianantarcticdivision',
+                                        'DOE/ORNL/ESD/CDIAC > Carbon Dioxide Information Analysis Center, Environmental Sciences Division, Oak Ridge National Laboratory, U. S. Department of Energy': 'australianantarcticdivision',
                                       'AU/AADC > Australian Antarctic Data Centre, Australia': 'australianantarcticdivision',
                                       'ICSU/SCAR/SCAR-MARBIN/ANTABIF > Antarctic Biodiversity Information Facility, Marine Biodiversity Information Network, Scientific Committee on Antarctic Research, International Council for Science': 'australianantarcticdivision',
-<<<<<<< HEAD
                                       'UQ/ENTOX > National Reserach Centre for Environmental Toxicology, University of Queensland, Australia': 'australianantarcticdivision',
                                       'WDC/WOUDC, TORONTO > World Data Center for Ozone and Ultraviolet Radiation, Toronto': 'australianantarcticdivision',
                                       'WDC/STS/IPS, SYDNEY > Ionospheric Prediction Service, World Data Centre for Solar Terrestrial Science, Sydney': 'australianantarcticdivision',
@@ -185,9 +195,12 @@ class SpatialHarvester(HarvesterBase):
                                        'NASA/GSFC/SSED/CDDIS > Crustal Dynamics Data Information System, Solar System Exploration Division, Goddard Space Flight Center, NASA': 'australianantarcticdivision',
                                        'DOE/ORNL/ESD/CDIAC > Carbon Dioxide Information Analysis Center, Environmental Sciences Division, Oak Ridge National Laboratory, U. S. Department of Energy': 'australianantarcticdivision',
                                       'Commonwealth of Australia (Geoscience Australia, LOSAMBA)': 'GeoscienceAustralia',
+                                      'Geoscience Australia (GA)': 'GeoscienceAustralia',
                                       'AU/GA > Geoscience Australia, Australia': 'GeoscienceAustralia',
                                       'Commonwealth Scientific and Industrial Research Organisation (CSIRO)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'CSIRO Marine and Atmospheric Research (CMAR)': 'commonwealthscientificandindustrialresearchorganisation',
+                                      'CSIRO Oceans & Atmosphere Flagship - Hobart': 'commonwealthscientificandindustrialresearchorganisation',
+                                                   'Department of Primary Industries NSW': 'NSW Department of Primary Industries',
                                       'Department of Industry and Investment (DII)': 'NSW Department of Primary Industries',
                                       'Department of Natural Resources and Mines, Queensland': 'Queensland Department of Natural Resources and Mines',
                                       'Derwent Estuary Program': 'Environment Protection Authority Tasmania',
@@ -198,15 +211,18 @@ class SpatialHarvester(HarvesterBase):
                                       'Flinders University, School of Chemistry, Physics and Earth Sciences': 'Flinders University',
                                       'Flinders University, School of Chemistry, Physics and Earth Sciences,': 'Flinders University',
                                       'Flinders University, School of Chemisty, Physics and Earth Sciences': 'Flinders University',
+                                      'School of Chemistry, Physics and Earth Sciences (SoCPES), Flinders University': 'Flinders University',
                                       'School of Environment, Flinders University': 'Flinders University',
                                       'School of the Environment, Flinders University': 'Flinders University',
                                       'IMAS, University of Tasmania': 'Institute for Marine and Antarctic Studies',
                                       'Institute for Marine and Antarctic Studies (IMAS), University of Tasmania': 'Institute for Marine and Antarctic Studies',
+                                      'Institute for Marine and Antarctic Studies (IMAS)': 'Institute for Marine and Antarctic Studies',
                                       'Land and Property Information': 'NSW Land and Property Information',
                                       'Land and Property Information-NSW': 'NSW Land and Property Information',
                                       'Marine Futures Project, The University of Western Australia (UWA)': 'University of Western Australia',
                                       'Marine Policy and Planning Branch, Department of Environment and Conservation': 'WA Department of Parks and Wildlife',
                                       'National Tidal Centre': 'bureauofmeteorology',
+                                      'National Tidal Centre Unit': 'bureauofmeteorology',
                                       'AU/BOM/TARO > Tasmanian-Antarctica Regional Office, Bureau of Meteorology, Australia': 'bureauofmeteorology',
                                       'NIWA National Institute of Water & Atmospheric Research': 'NZ National Institute of Water & Atmospheric Research',
                                       'NSW Department of Environment, Climate Change and Water (DECCW)': 'NSW Office of Environment and Heritage',
@@ -214,16 +230,25 @@ class SpatialHarvester(HarvesterBase):
                                       'Office of Environment and Heritage': 'NSW Office of Environment and Heritage',
                                       'Office of Environment and Heritage (OEH)': 'NSW Office of Environment and Heritage',
                                       'Ocean Technology Group, University of Sydney': 'University of Sydney',
+                                      'Discipline of Anatomy and Histology, The University of Sydney (USYD)': 'University of Sydney',
+                                      'School of Geosciences, The University of Sydney (USYD)': 'University of Sydney',
                                       'Royal Australian Navy Hydrography and Metoc Branch': 'Royal Australian Navy',
                                       'Royal Australian Navy Hydrography and METOC Branch': 'Royal Australian Navy',
                                       'SARDI Aquatic Sciences': 'South Australian Research and Development Institute',
                                       'School of Environmental Science, Murdoch University': 'Murdoch University',
                                       'The Australian National University (ANU)': 'Australian National University',
+                                      'Department of Earth and Marine Sciences (DEMS), The Australian National University (ANU) (Research School of Earth Sciences)': 'Australian National University',
+                                      'Research School of Earth Sciences (RSES), The Australian National University (ANU)': 'Australian National University',
                                       'The University of Sydney': 'University of Sydney',
                                       'WA Department of Fisheries - Scientific Custodian': 'WA Department of Fisheries',
                                       'WA Department of Fisheries - Technical Custodian': 'WA Department of Fisheries',
                                       'Department of Transport': 'WA Department of Transport',
-                                      'Geological Survey Division, Department of Mines and Petroleum': 'WA Department of Mines and Petroleum'
+                                      'Department of Transport (WA)': 'WA Department of Transport',
+                                      'Geological Survey Division, Department of Mines and Petroleum': 'WA Department of Mines and Petroleum',
+                                      'School of Botany, The University of Melbourne':'University of Melbourne',
+                                      'School of Botany, The University of Melbourne':'University of Melbourne',
+                                      'Tasmanian Aquaculture and Fisheries Institute (TAFI)':'Tasmanian Aquaculture and Fisheries Institute',
+                                      'Western Australian Museum':'Western Australian Museum (WAM)'
         }
         if organization_title in organization_title_mapping:
             organization_title = organization_title_mapping[organization_title]
