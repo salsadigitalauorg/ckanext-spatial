@@ -33,7 +33,7 @@ setup(
     wms_view=ckanext.spatial.nongeos_plugin:WMSView
     geojson_view=ckanext.spatial.nongeos_plugin:GeoJSONView
     wms_preview=ckanext.spatial.nongeos_plugin:WMSPreview
-    kml_preview=ckanext.spatial.nongeos_plugin:KMLPreview
+    kml_view=ckanext.spatial.nongeos_plugin:KMLView
     geojson_preview=ckanext.spatial.nongeos_plugin:GeoJSONPreview
     cswserver=ckanext.spatial.plugin:CatalogueServiceWeb
     spatial_harvest_metadata_api=ckanext.spatial.plugin:HarvestMetadataApi

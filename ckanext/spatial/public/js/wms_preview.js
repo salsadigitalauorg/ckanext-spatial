@@ -143,11 +143,11 @@ this.ckan.module('wmspreview', function (jQuery, _) {
           });
 //          olLayers.push(dummyLayer);
 
-var cloudmade_url = '.cloudmade.com/98a0ce317ad942cea786ded25271f410/116858/256/${z}/${x}/${y}.png';
+var maptile_url = '.mapbox.com/v3/maxious.gdb67hbh/${z}/${x}/${y}.png';
 if (window.location.protocol != "https:") {
-var base_urls = ['http://a.tiles'+cloudmade_url,'http://b.tiles'+cloudmade_url,'http://c.tiles'+cloudmade_url];
+var base_urls = ['http://a.tiles'+maptile_url,'http://b.tiles'+maptile_url,'http://c.tiles'+maptile_url];
 } else {
-var base_urls = ['https://ssl_tiles'+cloudmade_url];
+var base_urls = ['https://a.tiles'+maptile_url,'https://b.tiles'+maptile_url,'https://c.tiles'+maptile_url];
         }          
 
           var baseLayer = new OpenLayers.Layer.OSM("OSM",base_urls,{
