@@ -1,3 +1,5 @@
+# TODO: Move these to ckanext-geoviews
+
 import mimetypes
 from logging import getLogger
 
@@ -7,33 +9,67 @@ from ckan import plugins as p
 log = getLogger(__name__)
 
 
-class WMSPreview(p.SingletonPlugin):
-
+class DataViewBase(p.SingletonPlugin):
+    '''This base class is for view extensions. '''
+    if p.toolkit.check_ckan_version(min_version='2.3'):
+        p.implements(p.IResourceView, inherit=True)
+    else:
+        p.implements(p.IResourcePreview, inherit=True)
     p.implements(p.IConfigurer, inherit=True)
-    p.implements(p.IResourcePreview, inherit=True)
+    p.implements(p.IConfigurable, inherit=True)
 
-    WMS = ['wms']
+    proxy_is_enabled = False
+    same_domain = False
 
     def update_config(self, config):
-
         p.toolkit.add_public_directory(config, 'public')
         p.toolkit.add_template_directory(config, 'templates')
         p.toolkit.add_resource('public', 'ckanext-spatial')
 
-        self.proxy_enabled = p.toolkit.asbool(config.get('ckan.resource_proxy_enabled', 'False'))
+        config['ckan.resource_proxy_enabled'] = p.plugin_loaded('resource_proxy')
+
+    def configure(self, config):
+        enabled = config.get('ckan.resource_proxy_enabled', False)
+        self.proxy_is_enabled = enabled
 
     def setup_template_variables(self, context, data_dict):
         import ckanext.resourceproxy.plugin as proxy
-        if self.proxy_enabled and not data_dict['resource']['on_same_domain']:
-            p.toolkit.c.resource['proxy_url'] = proxy.get_proxified_resource_url(data_dict)
-        else:
-            p.toolkit.c.resource['proxy_url'] = data_dict['resource']['url']
+        self.same_domain = data_dict['resource'].get('on_same_domain')
+        if self.proxy_is_enabled and not self.same_domain:
+            data_dict['resource']['original_url'] = data_dict['resource']['url']
+            data_dict['resource']['url'] = proxy.get_proxified_resource_url(data_dict)
+
+
+
+class WMSView(DataViewBase):
+    WMS = ['wms']
+
+    # IResourceView (CKAN >=2.3)
+    def info(self):
+        return {'name': 'wms_view',
+                'title': 'WMS',
+                'icon': 'map-marker',
+                'iframed': True,
+                'default_title': p.toolkit._('WMS'),
+                }
+
+    def can_view(self, data_dict):
+        resource = data_dict['resource']
+        format_lower = resource['format'].lower()
+
+        if format_lower in self.WMS:
+            return True
+
+    def view_template(self, context, data_dict):
+        return 'dataviewer/wms.html'
+
+    # IResourcePreview (CKAN < 2.3)
 
     def can_preview(self, data_dict):
         format_lower = data_dict['resource']['format'].lower()
 
         correct_format = format_lower in self.WMS
-        can_preview_from_domain = self.proxy_enabled or data_dict['resource']['on_same_domain']
+        can_preview_from_domain = self.proxy_is_enabled or data_dict['resource']['on_same_domain']
         quality = 2
 
         if p.toolkit.check_ckan_version('2.1'):
@@ -52,10 +88,21 @@ class WMSPreview(p.SingletonPlugin):
     def preview_template(self, context, data_dict):
         return 'dataviewer/wms.html'
 
+    def setup_template_variables(self, context, data_dict):
+        import ckanext.resourceproxy.plugin as proxy
+        self.same_domain = data_dict['resource'].get('on_same_domain')
+        if self.proxy_is_enabled and not self.same_domain:
+            data_dict['resource']['proxy_url'] = proxy.get_proxified_resource_url(data_dict)
 
-class GeoJSONPreview(p.SingletonPlugin):
-    p.implements(p.IConfigurer, inherit=True)
-    p.implements(p.IResourcePreview, inherit=True)
+        else:
+            data_dict['resource']['proxy_url'] = data_dict['resource']['url']
+
+
+class WMSPreview(WMSView):
+    pass
+
+
+class GeoJSONView(DataViewBase):
     p.implements(p.ITemplateHelpers, inherit=True)
 
     GeoJSON = ['gjson', 'geojson']
@@ -65,20 +112,34 @@ class GeoJSONPreview(p.SingletonPlugin):
         template directory for the preview
         '''
 
-        p.toolkit.add_public_directory(config, 'public')
-        p.toolkit.add_template_directory(config, 'templates')
-        p.toolkit.add_resource('public', 'ckanext-spatial')
-
-        self.proxy_enabled = config.get(
-            'ckan.resource_proxy_enabled', False)
-
         mimetypes.add_type('application/json', '.geojson')
+
+    # IResourceView (CKAN >=2.3)
+    def info(self):
+        return {'name': 'geojson_view',
+                'title': 'GeoJSON',
+                'icon': 'map-marker',
+                'iframed': True,
+                'default_title': p.toolkit._('GeoJSON'),
+                }
+
+    def can_view(self, data_dict):
+        resource = data_dict['resource']
+        format_lower = resource['format'].lower()
+
+        if format_lower in self.GeoJSON:
+            return True
+
+    def view_template(self, context, data_dict):
+        return 'dataviewer/geojson.html'
+
+    # IResourcePreview (CKAN < 2.3)
 
     def can_preview(self, data_dict):
         format_lower = data_dict['resource']['format'].lower()
 
         correct_format = format_lower in self.GeoJSON
-        can_preview_from_domain = self.proxy_enabled or data_dict['resource']['on_same_domain']
+        can_preview_from_domain = self.proxy_is_enabled or data_dict['resource']['on_same_domain']
         quality = 2
 
         if p.toolkit.check_ckan_version('2.1'):
@@ -94,18 +155,10 @@ class GeoJSONPreview(p.SingletonPlugin):
 
         return correct_format and can_preview_from_domain
 
-    def setup_template_variables(self, context, data_dict):
-        import ckanext.resourceproxy.plugin as proxy
-        if (self.proxy_enabled
-                and not data_dict['resource']['on_same_domain']):
-            p.toolkit.c.resource['original_url'] = p.toolkit.c.resource['url']
-            p.toolkit.c.resource['url'] = proxy.get_proxified_resource_url(
-                data_dict)
-
     def preview_template(self, context, data_dict):
         return 'dataviewer/geojson.html'
 
-    ## ITemplateHelpers
+    # ITemplateHelpers
 
     def get_helpers(self):
         from ckanext.spatial import helpers as spatial_helpers
@@ -117,9 +170,8 @@ class GeoJSONPreview(p.SingletonPlugin):
                 'get_common_map_config_geojson' : spatial_helpers.get_common_map_config,
                 }
 
-class KMLPreview(p.SingletonPlugin):
-    p.implements(p.IConfigurer, inherit=True)
-    p.implements(p.IResourcePreview, inherit=True)
+class KMLView(DataViewBase):
+    p.implements(p.ITemplateHelpers, inherit=True)
 
     KML = ['kml']
 
@@ -128,18 +180,34 @@ class KMLPreview(p.SingletonPlugin):
         template directory for the preview
         '''
 
-        p.toolkit.add_public_directory(config, 'public')
-        p.toolkit.add_template_directory(config, 'templates')
-        p.toolkit.add_resource('public', 'ckanext-spatial')
+        #mimetypes.add_type('application/json', '.geojson')
 
-        self.proxy_enabled = config.get(
-            'ckan.resource_proxy_enabled', False)
+    # IResourceView (CKAN >=2.3)
+    def info(self):
+        return {'name': 'kml_view',
+                'title': 'KML',
+                'icon': 'map-marker',
+                'iframed': True,
+                'default_title': p.toolkit._('GeoJSON'),
+                }
+
+    def can_view(self, data_dict):
+        resource = data_dict['resource']
+        format_lower = resource['format'].lower()
+
+        if format_lower in self.KML:
+            return True
+
+    def view_template(self, context, data_dict):
+        return 'dataviewer/kml.html'
+
+    # IResourcePreview (CKAN < 2.3)
 
     def can_preview(self, data_dict):
         format_lower = data_dict['resource']['format'].lower()
 
         correct_format = format_lower in self.KML
-        can_preview_from_domain = self.proxy_enabled or data_dict['resource']['on_same_domain']
+        can_preview_from_domain = self.proxy_is_enabled or data_dict['resource']['on_same_domain']
         quality = 2
 
         if p.toolkit.check_ckan_version('2.1'):
@@ -155,18 +223,10 @@ class KMLPreview(p.SingletonPlugin):
 
         return correct_format and can_preview_from_domain
 
-    def setup_template_variables(self, context, data_dict):
-        import ckanext.resourceproxy.plugin as proxy
-        if (self.proxy_enabled
-                and not data_dict['resource']['on_same_domain']):
-            p.toolkit.c.resource['original_url'] = p.toolkit.c.resource['url']
-            p.toolkit.c.resource['url'] = proxy.get_proxified_resource_url(
-                data_dict)
-
     def preview_template(self, context, data_dict):
         return 'dataviewer/kml.html'
 
-    ## ITemplateHelpers
+    # ITemplateHelpers
 
     def get_helpers(self):
         from ckanext.spatial import helpers as spatial_helpers
@@ -175,5 +235,8 @@ class KMLPreview(p.SingletonPlugin):
         # As this plugin can be loaded independently of the main spatial one
         # We define a different helper pointing to the same function
         return {
-                'get_common_map_config_kml' : spatial_helpers.get_common_map_config,
-                }
+            'get_common_map_config_kml' : spatial_helpers.get_common_map_config,
+            }
+
+class GeoJSONPreview(GeoJSONView):
+    pass
