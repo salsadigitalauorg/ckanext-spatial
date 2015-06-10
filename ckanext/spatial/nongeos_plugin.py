@@ -55,7 +55,7 @@ class WMSView(DataViewBase):
 
     def can_view(self, data_dict):
         resource = data_dict['resource']
-        format_lower = resource['format'].lower()
+        format_lower = resource['format'].lower() if 'format' in resource else ''
 
         if format_lower in self.WMS:
             return True
@@ -125,7 +125,7 @@ class GeoJSONView(DataViewBase):
 
     def can_view(self, data_dict):
         resource = data_dict['resource']
-        format_lower = resource['format'].lower()
+        format_lower = resource['format'].lower() if 'format' in resource else ''
 
         if format_lower in self.GeoJSON:
             return True
@@ -193,7 +193,7 @@ class KMLView(DataViewBase):
 
     def can_view(self, data_dict):
         resource = data_dict['resource']
-        format_lower = resource['format'].lower()
+        format_lower = resource['format'].lower() if 'format' in resource else ''
 
         if format_lower in self.KML:
             return True

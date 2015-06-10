@@ -3,7 +3,7 @@
 this.ckan.module('wmspreview', function (jQuery, _) {
 
     // Private
-    var defaultVersion = "1.1.1";
+    var defaultVersion = "1.3.0";
 
     var preferredFormat = "image/png";
 
