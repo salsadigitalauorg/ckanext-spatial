@@ -185,6 +185,8 @@ class SpatialHarvester(HarvesterBase):
         organization_title_mapping = {'Commonwealth of Australia (Geoscience Australia)': 'GeoscienceAustralia',
                                       'Antarctic Climate and Ecosystems Cooperative Research Centre (ACE CRC)': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Bureau of Meteorology (BOM)': 'bureauofmeteorology',
+                                      'Australian Bureau of Meteorology': 'bureauofmeteorology',
+                                      'Bureau of Meteorology': 'bureauofmeteorology',
                                       'Australian Electoral Commission (AEC)': 'australianelectoralcommission',
                                         'Australian Government Department of Sustainability, Environment, Water, Population and Communities': 'departmentofenvironment',
         'Australian Government Department of the Environment': 'departmentofenvironment',
