@@ -31,6 +31,8 @@ from ckanext.spatial.validation import Validators, all_validators
 from ckanext.spatial.model import ISODocument
 from ckanext.spatial.interfaces import ISpatialHarvester
 
+from owslib import wms
+
 log = logging.getLogger(__name__)
 
 DEFAULT_VALIDATOR_PROFILES = ['iso19139']
@@ -48,6 +50,8 @@ def text_traceback():
 def guess_standard(content):
     lowered = content.lower()
     if '</gmd:MD_Metadata>'.lower() in lowered:
+        return 'iso'
+    if '</MD_Metadata>'.lower() in lowered:
         return 'iso'
     if '</gmi:MI_Metadata>'.lower() in lowered:
         return 'iso'
@@ -318,11 +322,18 @@ class SpatialHarvester(HarvesterBase):
         '''
 
         tags = []
+        geospatial_topic = []
         if 'tags' in iso_values:
             for tagname in iso_values['tags']:
                 for tag in tagname.replace(' - ','|').split("|"):
                     tag = tag[:50] if len(tag) > 50 else tag
                     tags.append({'name': tag.strip()})
+
+        if 'topic-category' in iso_values:
+            for tagname in iso_values['topic-category']:
+                for tag in tagname.replace(' - ','|').split("|"):
+                    tag = tag[:50] if len(tag) > 50 else tag
+                    geospatial_topic.append({'name': tag.strip()})
 
         # Add default_tags from config
         default_tags = self.source_config.get('default_tags',[])
@@ -332,8 +343,9 @@ class SpatialHarvester(HarvesterBase):
 
         package_dict = {
             'title': iso_values['title'],
-            'notes': iso_values['abstract'],
+            'notes': iso_values['abstract'] or iso_values['purpose'] + iso_values['lineage'],
             'tags': tags,
+
             'resources': [],
         }
 
@@ -359,8 +371,9 @@ class SpatialHarvester(HarvesterBase):
         extras = {
             'guid': harvest_object.guid,
             'spatial_harvester': True,
-        }
 
+        }
+        #'geospatial_topic': geospatial_topic,
         # Just add some of the metadata as extras, not the whole lot
         for name in [
             # Essentials
@@ -572,14 +585,20 @@ class SpatialHarvester(HarvesterBase):
                         {
                             'url': url,
                             'name': resource.get('name') or resource_locator.get('name') or resource_locator.get(
-                                'description') or p.toolkit._(
+                                'description') or url or p.toolkit._(
                                 'Unnamed resource'),
                             'description': (resource_locator.get('description') if resource_locator.get(
                                 'name') else None) or '',
+                            'last_modified':  iso_values['date-updated'] or '',
                             'resource_locator_protocol': resource_locator.get('protocol') or '',
                             'resource_locator_function': resource_locator.get('function') or '',
                         })
-                    package_dict['resources'].append(resource)
+                    dupe = False
+                    for r in package_dict['resources']:
+                        if r['url'] == url:
+                            dupe = True
+                    if not dupe:
+                       package_dict['resources'].append(resource)
 
         # detection of 0 resources
         if True:
