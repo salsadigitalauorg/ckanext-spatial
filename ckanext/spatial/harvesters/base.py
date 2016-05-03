@@ -613,17 +613,17 @@ class SpatialHarvester(HarvesterBase):
                 return None
 
         # AGLS mapping
-        if iso_values['source']:
+        if 'source' in iso_values:
             package_dict['url'] = iso_values['source']
         elif 'find.ga.gov.au' in harvest_object.source.url:
             package_dict['url'] = 'http://find.ga.gov.au/FIND/metadata-record/uuid/' + harvest_object.guid
-        if iso_values['metadata-date']:
+        if 'metadata-date' in iso_values:
             extras['temporal_coverage'] = iso_values['metadata-date']
-        if iso_values['dataset-reference-date'][0]['value']:
+        if  'dataset-reference-date' in iso_values and 'value' in iso_values['dataset-reference-date'][0]:
             extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
-        if iso_values['frequency-of-update']:
+        if 'frequency-of-update' in iso_values:
             extras['update_freq'] = iso_values['frequency-of-update']
-        if iso_values['contact-email']:
+        if 'contact-email' in iso_values:
             extras['contact_point'] = iso_values['contact-email']
         extras['data_state'] = 'inactive'
 
