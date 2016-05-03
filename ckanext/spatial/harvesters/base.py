@@ -485,6 +485,8 @@ class SpatialHarvester(HarvesterBase):
             if content:
                 harvest_object.content = content
             else:
+                log.info('Failing with document: %r' % original_document)
+                log.info('Failing with format: %r' % original_format)
                 self._save_object_error('Transformation to ISO failed', harvest_object, 'Import')
                 return False
         else:
