@@ -312,6 +312,7 @@ class SpatialHarvester(HarvesterBase):
         '''
 
         tags = []
+        geospatial_topic = []
         if 'tags' in iso_values:
             for tagname in iso_values['tags']:
                 for tag in tagname.replace(' - ', '|').split("|"):
