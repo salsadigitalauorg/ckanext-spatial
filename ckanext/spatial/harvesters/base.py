@@ -380,7 +380,10 @@ class SpatialHarvester(HarvesterBase):
             "metadataStandard",
             "metadataStandardVersion",
         ]:
-            extras[name] = iso_values[name]
+            try:
+                extras[name] = iso_values[name]
+            except:
+                pass
 
         if len(iso_values.get('progress', [])):
             extras['progress'] = iso_values['progress'][0]
