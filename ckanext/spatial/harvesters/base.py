@@ -107,7 +107,7 @@ def guess_resource_format(url, use_mimetypes=False):
     if resource_format:
         return resource_format
 
-    return 'Unknown'
+    return None
 
 
 class SpatialHarvester(HarvesterBase):
