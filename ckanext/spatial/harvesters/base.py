@@ -48,9 +48,9 @@ def text_traceback():
 
 def guess_standard(content):
     lowered = content.lower()
-    if '</gmd:MD_Metadata>'.lower() in lowered:
+    if 'MD_Metadata'.lower() in lowered:
         return 'iso'
-    if '</gmi:MI_Metadata>'.lower() in lowered:
+    if 'MI_Metadata'.lower() in lowered:
         return 'iso'
     if '</metadata>'.lower() in lowered:
         return 'fgdc'
