@@ -367,6 +367,10 @@ class SpatialHarvester(HarvesterBase):
             # Essentials
             'spatial-reference-system',
             'guid',
+        ]:
+            extras[name] = iso_values[name]
+
+        for name in [
             # Usefuls
             'dataset-reference-date',
             'metadata-language',  # Language
