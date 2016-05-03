@@ -606,7 +606,7 @@ class SpatialHarvester(HarvesterBase):
             if re.search(
                     "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc|xhtml",
                     res_string, re.IGNORECASE):
-                if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict[
+                if 'source' in iso_values and 'ga.gov.au' in iso_values.get('source',""): package_dict['notes'] = package_dict[
                                                                                                              'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
             else:
                 log.debug(res_string)
