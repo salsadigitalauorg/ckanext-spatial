@@ -6,7 +6,7 @@ for convenience.
 import logging
 
 from owslib.etree import etree
-from owslib.fes import PropertyIsEqualTo, SortBy, SortProperty
+from owslib.fes import PropertyIsEqualTo
 
 log = logging.getLogger(__name__)
 
@@ -66,11 +66,6 @@ class CswService(OwsService):
     Perform various operations on a CSW service
     """
     from owslib.csw import CatalogueServiceWeb as _Implementation
-
-    def __init__(self, endpoint=None):
-        super(CswService, self).__init__(endpoint)
-        self.sortby = SortBy([SortProperty('dc:identifier')])
-
     def getrecords(self, qtype=None, keywords=[],
                    typenames="csw:Record", esn="brief",
                    skip=0, count=10, outputschema="gmd", **kw):
@@ -88,7 +83,6 @@ class CswService(OwsService):
             "startposition": skip,
             "maxrecords": count,
             "outputschema": namespaces[outputschema],
-            "sortby": self.sortby
             }
         log.info('Making CSW request: getrecords2 %r', kwa)
         csw.getrecords2(**kwa)
@@ -116,8 +110,7 @@ class CswService(OwsService):
             "startposition": startposition,
             "maxrecords": page,
             "outputschema": namespaces[outputschema],
-            "cql": cql,
-            "sortby": self.sortby
+            "cql":cql,
             }
         i = 0
         matches = 0
