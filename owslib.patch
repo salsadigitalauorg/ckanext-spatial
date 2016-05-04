@@ -44,23 +44,3 @@ index ce2f4bc..0f122c4 100644
 +            self.response = '<?xml version="1.0" encoding="UTF-8"?><csw:GetRecordByIdResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2">' + self.response.replace('<?xml version="1.0" encoding="UTF-8"?>','') + '</csw:GetRecordByIdResponse>'
          # parse result see if it's XML
          self._exml = etree.parse(StringIO.StringIO(self.response))
- 
-diff --git a/namespaces.py b/namespaces.py
-index 6037cdf..c5d66bc 100644
---- a/namespaces.py
-+++ b/namespaces.py
-@@ -21,6 +21,7 @@ class Namespaces(object):
-         'gmx'   :   'http://www.isotc211.org/2005/gmx',
-         'gts'   :   'http://www.isotc211.org/2005/gts',
-         'ogc'   :   'http://www.opengis.net/ogc',
-+        'mcp'   :   'http://bluenet3.antcrc.utas.edu.au/mcp',
-         'om'    :   'http://www.opengis.net/om/1.0',
-         'om10'  :   'http://www.opengis.net/om/1.0',
-         'om100' :   'http://www.opengis.net/om/1.0',
-@@ -133,4 +134,4 @@ class Namespaces(object):
-             if key in self.namespace_dict.keys():
-                 retval[key] = self.namespace_dict[key]
- 
--        return retval
-\ No newline at end of file
-+        return retval
