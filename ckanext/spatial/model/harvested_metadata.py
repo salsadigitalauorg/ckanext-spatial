@@ -146,14 +146,14 @@ class ISOElement(MappedXmlElement):
 
     namespaces = {
        "gts": "http://www.isotc211.org/2005/gts",
-       "gml": "http://www.opengis.net/gml",
-       "gml32": "http://www.opengis.net/gml/3.2",
+       "gml": "http://www.opengis.net/gml/3.2",
        "gmx": "http://www.isotc211.org/2005/gmx",
        "gsr": "http://www.isotc211.org/2005/gsr",
        "gss": "http://www.isotc211.org/2005/gss",
        "gco": "http://www.isotc211.org/2005/gco",
        "gmd": "http://www.isotc211.org/2005/gmd",
        "srv": "http://www.isotc211.org/2005/srv",
+       "mcp": "http://bluenet3.antcrc.utas.edu.au/mcp",
        "xlink": "http://www.w3.org/1999/xlink",
        "xsi": "http://www.w3.org/2001/XMLSchema-instance",
     }
@@ -477,6 +477,26 @@ class ISODocument(MappedXmlDocument):
             search_paths="gmd:fileIdentifier/gco:CharacterString/text()",
             multiplicity="0..1",
         ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="source",
+            search_paths="gmd:dataSetURI/gco:CharacterString/text()",
+            multiplicity="0..1",
+        ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="dateStamp",
+            search_paths="gmd:dateStamp/gco:Date/text()",
+            multiplicity="0..1",
+        ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="metadataStandard",
+            search_paths="gmd:metadataStandardName/gco:CharacterString/text()",
+            multiplicity="0..1",
+        ),
+        ISOElement( # added for Geoscience Australia GeoNetwork CSW install
+            name="metadataStandardVersion",
+            search_paths="gmd:metadataStandardVersion/gco:CharacterString/text()",
+            multiplicity="0..1",
+        ),
         ISOElement(
             name="metadata-language",
             search_paths=[
@@ -679,6 +699,14 @@ class ISODocument(MappedXmlDocument):
                 "gmd:identificationInfo/gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_Constraints/gmd:useLimitation/gco:CharacterString/text()",
                 "gmd:identificationInfo/srv:SV_ServiceIdentification/gmd:resourceConstraints/gmd:MD_Constraints/gmd:useLimitation/gco:CharacterString/text()",
             ],
+            multiplicity="*",
+        ),
+        ISOElement(
+            name="creative-commons",
+            search_paths=[
+                "gmd:identificationInfo/gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_Commons/gmd:licenseLink/gmd:URL/text()",
+                "gmd:identificationInfo/gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_Commons/gmd:licenseName/gco:CharacterString/text()",
+                ],
             multiplicity="*",
         ),
         ISOAggregationInfo(

@@ -343,7 +343,8 @@ class Validators(object):
                 #error_message_list.insert(0, 'Validating against "%s" profile failed' % validator.title)
                 log.info('Validating against "%s" profile failed' % validator.title)
                 log.debug('%r', error_message_list)
-                return False, validator.name, error_message_list
+		#disable xml validation
+                #return False, validator.name, error_message_list
             log.debug('Validated against "%s"', validator.title)
         log.info('Validation passed')
         return True, None, []
