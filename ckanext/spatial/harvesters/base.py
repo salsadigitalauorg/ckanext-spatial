@@ -606,8 +606,9 @@ class SpatialHarvester(HarvesterBase):
             if re.search(
                     "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc|xhtml",
                     res_string, re.IGNORECASE):
-                if 'source' in iso_values and 'ga.gov.au' in iso_values.get('source',""): package_dict['notes'] = package_dict[
-                                                                                                             'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+                if 'source' in iso_values and 'ga.gov.au' in iso_values.get('source', ""): package_dict['notes'] = \
+                package_dict[
+                    'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
             else:
                 log.debug(res_string)
                 return None
@@ -619,7 +620,7 @@ class SpatialHarvester(HarvesterBase):
             package_dict['url'] = 'http://find.ga.gov.au/FIND/metadata-record/uuid/' + harvest_object.guid
         if 'metadata-date' in iso_values:
             extras['temporal_coverage'] = iso_values['metadata-date']
-        if  'dataset-reference-date' in iso_values and 'value' in iso_values['dataset-reference-date'][0]:
+        if 'dataset-reference-date' in iso_values and 'value' in iso_values['dataset-reference-date'][0]:
             extras['temporal_coverage'] = iso_values['dataset-reference-date'][0]['value']
         if 'frequency-of-update' in iso_values:
             extras['update_freq'] = iso_values['frequency-of-update']
@@ -716,8 +717,6 @@ class SpatialHarvester(HarvesterBase):
             if content:
                 harvest_object.content = content
             else:
-                log.info('Failing with document: %r' % original_document)
-                log.info('Failing with format: %r' % original_format)
                 self._save_object_error('Transformation to ISO failed', harvest_object, 'Import')
                 return False
         else:
