@@ -1,0 +1,14 @@
+-- csw.py      2016-05-30 15:46:02.000000000 +1000
++++ csw.py     2016-05-30 15:46:28.486137903 +1000
+@@ -358,7 +358,10 @@
+                     node2.append(flt.setConstraintList(constraints))
+                 # Now add a CQL filter if passed in
+                 elif cql is not None:
+-                    etree.SubElement(node2, util.nspath_eval('csw:CqlText', namespaces)).text = cql
++                   if cql[:1] == '<':
++                       node2.append(etree.fromstring(cql))
++                   else:
++                        etree.SubElement(node2, util.nspath_eval('csw:CqlText', namespaces)).text = cql
+
+             if sortby is not None and isinstance(sortby, fes.SortBy):
+                 node1.append(sortby.toXML())
