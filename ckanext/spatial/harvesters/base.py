@@ -797,6 +797,20 @@ class SpatialHarvester(HarvesterBase):
             log.error('No package dict returned, aborting import for object {0}'.format(harvest_object.id))
             return False
 
+        def test_res(res):
+            if 'format' in res and res.get('format', '') is not None:
+                if res['format'].upper() in ['CSV', 'XLS', 'WMS', 'WFS', 'WCS', 'SOS', 'CSW', 'ARCIMS', 'ARCGIS_REST',
+                                             'SHP', 'ARCGRID', 'KML', 'ZIP']:
+                    return True
+            return False
+
+        new_res = [x for x in package_dict.get('resources', []) if test_res(x)]
+        package_dict['resources'] = new_res
+
+        if not package_dict['resources']:
+            log.error('Package dict returned no valid resources for object {0}'.format(harvest_object.id))
+            return False
+
         # Create / update the package
         context.update({
            'extras_as_string': True,

@@ -98,8 +98,8 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
                     if identifier is None:
                         log.error('CSW returned identifier %r, skipping...' % identifier)
                         continue
-                    if '{' not in identifier:
-                        guids_in_harvest.add(identifier)
+                    identifier = identifier.translate(None, '{}')
+                    guids_in_harvest.add(identifier)
                 except Exception, e:
                     self._save_gather_error('Error for the identifier %s [%r]' % (identifier, e), harvest_job)
                     continue
