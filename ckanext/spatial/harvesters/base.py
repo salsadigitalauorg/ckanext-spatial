@@ -59,7 +59,7 @@ def guess_standard(content):
     return 'unknown'
 
 
-def guess_resource_format(url, use_mimetypes=False):
+def guess_resource_format(url, use_mimetypes=True):
     '''
     Given a URL try to guess the best format to assign to the resource
 
