@@ -126,6 +126,9 @@ class SpatialHarvester(HarvesterBase):
     {"type": "Polygon", "coordinates": [[[$xmin, $ymin], [$xmax, $ymin], [$xmax, $ymax], [$xmin, $ymax], [$xmin, $ymin]]]}
     ''')
 
+    target_formats = list(set(map(lambda x: x.upper(), p.toolkit.aslist(config.get('ckanext.spatial.harvest.csw_harvested_formats',
+                                                                                   'csv xls wms wfs wcs sos csw arcims arcgis_rest shp arcgrid kml zip')))))
+
     ## IHarvester
 
     def validate_config(self, source_config):
@@ -799,8 +802,7 @@ class SpatialHarvester(HarvesterBase):
 
         def test_res(res):
             if 'format' in res and res.get('format', '') is not None:
-                if res['format'].upper() in ['CSV', 'XLS', 'WMS', 'WFS', 'WCS', 'SOS', 'CSW', 'ARCIMS', 'ARCGIS_REST',
-                                             'SHP', 'ARCGRID', 'KML', 'ZIP']:
+                if res['format'].upper() in self.target_formats:
                     return True
             return False
 
