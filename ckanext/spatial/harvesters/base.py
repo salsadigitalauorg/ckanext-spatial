@@ -598,17 +598,8 @@ class SpatialHarvester(HarvesterBase):
                     if not dupe:
                         package_dict['resources'].append(resource)
 
-        # detection of 0 resources
-        if True:
-            res_string = json.dumps(package_dict['resources'])
-            if re.search(
-                    "GoCad|ESRIGrid|ASCIIGrid|ArcGIS-grid|kml|shp|shapefile|xls|csv|Excel|MapInfo|ecw|wms|wfs|pGDB|netCDF|tab\\.|\\.dat|misc|xhtml",
-                    res_string, re.IGNORECASE):
-                if iso_values['source'] and 'ga.gov.au' in iso_values['source']: package_dict['notes'] = package_dict[
-                                                                                                             'notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
-            else:
-                log.debug(res_string)
-                return None
+        if iso_values['source'] and 'ga.gov.au' in iso_values['source']:
+            package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
 
         # AGLS mapping
         if iso_values['source']:
