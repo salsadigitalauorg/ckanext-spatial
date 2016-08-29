@@ -1,24 +1,24 @@
 diff -ur owslib.orig/csw.py owslib/csw.py
---- owslib.orig/csw.py 	2016-08-19 23:05:57.000000000 +1000
-+++ owslib/csw.py      	2016-08-29 12:11:19.788297791 +1000
+--- owslib.orig/csw.py	2016-08-19 23:05:57.000000000 +1000
++++ owslib/csw.py	2016-08-29 12:11:19.788297791 +1000
 @@ -36,7 +36,7 @@
-
+ 
  class CatalogueServiceWeb:
      """ csw request class """
 -    def __init__(self, url, lang='en-US', version='2.0.2', timeout=10, skip_caps=False):
 +    def __init__(self, url, lang='en-US', version='2.0.2', timeout=300, skip_caps=False):
          """
-
+ 
          Construct and process a GetCapabilities request
 @@ -266,6 +266,9 @@
-
+ 
          self.request = '%s%s%s' % (bind_url(self.url), urlencode(data), ','.join(id))
-
-+      	 if self.url == "http://find.ga.gov.au/FIND/geonetwork/srv/eng/csw?version=2.0.2&service=CSW":
-+      	     self.request = 'http://find.ga.gov.au/FIND/metadata-record/get-xml?' + urlencode({'uuid':id[0]})
+ 
++	if self.url == "http://find.ga.gov.au/FIND/geonetwork/srv/eng/csw?version=2.0.2&service=CSW":
++	    self.request = 'http://find.ga.gov.au/FIND/metadata-record/get-xml?' + urlencode({'uuid':id[0]})
 +
          self._invoke()
-
+  
          if self.exceptionreport is None:
 @@ -331,7 +334,10 @@
                      node2.append(flt.setConstraintList(constraints))
@@ -29,39 +29,39 @@ diff -ur owslib.orig/csw.py owslib/csw.py
 +                        node2.append(etree.fromstring(cql))
 +                    else:
 +                        etree.SubElement(node2, util.nspath_eval('csw:CqlText', namespaces)).text = cql
-
+                 
              if sortby is not None and isinstance(sortby, fes.SortBy):
                  node1.append(sortby.toXML())
 @@ -505,6 +511,10 @@
                  val = i.find(util.nspath_eval('gmd:fileIdentifier/gco:CharacterString', namespaces))
                  identifier = self._setidentifierkey(util.testXMLValue(val))
                  self.records[identifier] = MD_Metadata(i)
-+      	    for i in self._exml.findall('.//'+util.nspath_eval('mcp:MD_Metadata', namespaces)):
-+      		val = i.find(util.nspath_eval('gmd:fileIdentifier/gco:CharacterString', namespaces))
-+      		identifier = self._setidentifierkey(util.testXMLValue(val))
-+      		self.records[identifier] = MD_Metadata(i)
++	    for i in self._exml.findall('.//'+util.nspath_eval('mcp:MD_Metadata', namespaces)):
++		val = i.find(util.nspath_eval('gmd:fileIdentifier/gco:CharacterString', namespaces))
++		identifier = self._setidentifierkey(util.testXMLValue(val))
++		self.records[identifier] = MD_Metadata(i)
          elif outputschema == namespaces['fgdc']: # fgdc csdgm
              for i in self._exml.findall('.//metadata'):
                  val = i.find('idinfo/datasetid')
 @@ -581,6 +591,10 @@
-
+ 
              self.response = util.http_post(self.url, self.request, self.lang, self.timeout)
-
-+      	if 'get-xml' in self.request:
-+      	    self.response = '<?xml version="1.0" encoding="UTF-8"?><csw:GetRecordByIdResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2">' + self.response.replace('<?xml version="1.0" encoding="UTF-8"?>','') + '</csw:GetRecordByIdResponse>'
+ 
++	if 'get-xml' in self.request:
++	    self.response = '<?xml version="1.0" encoding="UTF-8"?><csw:GetRecordByIdResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2">' + self.response.replace('<?xml version="1.0" encoding="UTF-8"?>','') + '</csw:GetRecordByIdResponse>'
 +
 +
          # parse result see if it's XML
          self._exml = etree.parse(StringIO.StringIO(self.response))
-
+ 
 diff -ur owslib.orig/namespaces.py owslib/namespaces.py
---- owslib.orig/namespaces.py  	2016-08-29 17:30:14.780515607 +1000
-+++ owslib/namespaces.py       	2016-08-29 12:13:13.354664070 +1000
+--- owslib.orig/namespaces.py	2016-08-29 17:30:14.780515607 +1000
++++ owslib/namespaces.py	2016-08-29 12:13:13.354664070 +1000
 @@ -20,6 +20,7 @@
          'gml32' :   'http://www.opengis.net/gml/3.2',
          'gmx'   :   'http://www.isotc211.org/2005/gmx',
          'gts'   :   'http://www.isotc211.org/2005/gts',
-+      	 'mcp'   :   'http://bluenet3.antcrc.utas.edu.au/mcp',
++	'mcp'   :   'http://bluenet3.antcrc.utas.edu.au/mcp',
          'ogc'   :   'http://www.opengis.net/ogc',
          'om'    :   'http://www.opengis.net/om/1.0',
          'om10'  :   'http://www.opengis.net/om/1.0',
