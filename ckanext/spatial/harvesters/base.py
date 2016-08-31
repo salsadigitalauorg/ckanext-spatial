@@ -792,13 +792,27 @@ class SpatialHarvester(HarvesterBase):
             return False
 
         def test_res(res):
-            if 'format' in res and res.get('format', '') is not None:
-                if res['format'].upper() in self.target_formats:
-                    return True
-            return False
+            if 'format' in res and res.get('format', None) is not None:
+                p_format = res['format'].split('/')[-1].upper()
+                if any([t_format in p_format for t_format in self.target_formats]):
+                    return res['format'].split('/')[-1]
+            return None
 
-        new_res = [x for x in package_dict.get('resources', []) if test_res(x)]
+        old_res = package_dict.get('resources', [])
+        new_res = []
+        for res in old_res:
+            new_format = test_res(res)
+            if new_format is not None:
+                res['format'] = new_format
+                new_res.append(res)
+
         package_dict['resources'] = new_res
+
+        discarded_formats = set([x.get('format', '') for x in old_res if test_res(x) is None])
+        discarded_formats.discard('')
+        discarded_formats.discard(None)
+        if len(discarded_formats) > 0:
+            log.debug('Discarding resources with formats: {0}'.format(' '.join(discarded_formats)))
 
         if not package_dict['resources']:
             log.error('Package dict returned no valid resources for object {0}'.format(harvest_object.id))
