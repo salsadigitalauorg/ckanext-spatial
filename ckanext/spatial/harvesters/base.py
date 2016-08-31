@@ -652,6 +652,7 @@ class SpatialHarvester(HarvesterBase):
         return None
 
     def import_stage(self, harvest_object):
+
         context = {
             'model': model,
             'session': model.Session,
@@ -816,6 +817,15 @@ class SpatialHarvester(HarvesterBase):
 
         if not package_dict['resources']:
             log.error('Package dict returned no valid resources for object {0}'.format(harvest_object.id))
+
+            # Delete package incase format selection has changed in the config
+            if status == 'change':
+                # Delete package
+                context.update({
+                    'ignore_auth': True,
+                })
+                p.toolkit.get_action('package_delete')(context, {'id': harvest_object.package_id})
+                log.info('Deleted package {0} with guid {1}'.format(harvest_object.package_id, harvest_object.guid))
             return False
 
         # Create / update the package
