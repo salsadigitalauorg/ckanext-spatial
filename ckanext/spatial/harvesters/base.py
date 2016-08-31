@@ -887,6 +887,10 @@ class SpatialHarvester(HarvesterBase):
                 context['schema'] = package_schema
 
                 package_dict['id'] = harvest_object.package_id
+                package_dict['state'] = 'active'
+                context.update({
+                    'ignore_auth': True,
+                })
                 try:
                     package_id = p.toolkit.get_action('package_update')(context, package_dict)
                     log.info('Updated package %s with guid %s', package_id, harvest_object.guid)
