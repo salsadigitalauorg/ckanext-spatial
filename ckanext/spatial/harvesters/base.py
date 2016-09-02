@@ -826,8 +826,11 @@ class SpatialHarvester(HarvesterBase):
                 context.update({
                     'ignore_auth': True,
                 })
-                p.toolkit.get_action('package_delete')(context, {'id': harvest_object.package_id})
-                log.info('Deleted package {0} with guid {1}'.format(harvest_object.package_id, harvest_object.guid))
+                try:
+                    p.toolkit.get_action('package_delete')(context, {'id': harvest_object.package_id})
+                    log.info('Deleted package {0} with guid {1}'.format(harvest_object.package_id, harvest_object.guid))
+                except logic.NotFound:
+                    log.info('Package {0} with guid {1} was not found, continuing...'.format(harvest_object.package_id, harvest_object.guid))
             return False
 
         # Create / update the package
