@@ -418,14 +418,14 @@ class SpatialHarvester(HarvesterBase):
         commons = iso_values.get('creative-commons', '')
 
         for l in self.licenses:
-            if any([any([len(extras[y]) and x in ''.join(extras[y]) for y in ['use_constraints', 'access_constraints']]) or (commons and x in commons[0]) for x in [l.title, l.url]]):
+            if any([any([len(extras[y]) and x in ''.join(extras[y]) for y in ['use_constraints', 'access_constraints']]) or (commons and x in commons[0]) for x in [l.title, l.url or l.title]]):
                 extras['licence'] = l.id
                 package_dict['license_id'] = l.id
                 extras['licence_url'] = l.url
                 break
         else:
-            extras['licence'] = "other-open"
-            package_dict['license_id'] = "other-open"
+            extras['licence'] = "other"
+            package_dict['license_id'] = "other"
             extras['licence_url'] = ""
 
         # Grpahic preview
@@ -506,7 +506,6 @@ class SpatialHarvester(HarvesterBase):
             iso_values.get('resource-locator-identification', [])
 
         if len(resource_locators):
-            log.debug("Analyzing resource locators: {0}".format(resource_locators))
             for resource_locator in resource_locators:
                 url = resource_locator.get('url')
                 if url and url.startswith('http') and not url.startswith(
