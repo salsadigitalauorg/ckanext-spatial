@@ -129,6 +129,8 @@ class SpatialHarvester(HarvesterBase):
     target_formats = list(set(map(lambda x: x.upper(), p.toolkit.aslist(config.get('ckanext.spatial.harvest.csw_harvested_formats',
                                                                                    'csv xls wms wfs wcs sos csw arcims arcgis_rest shp arcgrid kml zip')))))
 
+    licenses = model.Package.get_license_register().values()
+
     ## IHarvester
 
     def validate_config(self, source_config):
@@ -412,29 +414,20 @@ class SpatialHarvester(HarvesterBase):
                 extras['licence_url'] = license_url_extracted
 
         extras['access_constraints'] = iso_values.get('limitations-on-public-access', '')
-        if len(extras['access_constraints']) and (
-                "Creative Commons Attribution 3.0 Australia Licence" in ''.join(extras[
-                                                                                    'access_constraints']) or 'http://creativecommons.org/licenses/by/' in ''.join(
-            extras[
-                'access_constraints'])):
-            extras['licence'] = 'cc-by'
-            package_dict['license_id'] = 'cc-by'
-            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
-
         extras['use_constraints'] = iso_values.get('use-constraints', '')
-        if len(extras['use_constraints']) and ("Creative Commons Attribution" in ''.join(extras[
-                                                                                             'use_constraints']) or 'http://creativecommons.org/licenses/by/' in ''.join(
-            extras[
-                'use_constraints'])):
-            extras['licence'] = 'cc-by'
-            package_dict['license_id'] = 'cc-by'
-            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
-
         commons = iso_values.get('creative-commons', '')
-        if commons and ("Attribution" in commons[0] or 'http://creativecommons.org/licenses/by/' in commons[0]):
-            extras['licence'] = 'cc-by'
-            package_dict['license_id'] = 'cc-by'
-            extras['licence_url'] = 'http://www.opendefinition.org/licenses/cc-by'
+
+        for l in self.licenses:
+            if any([any([len(extras[y]) and x in ''.join(extras[y]) for y in ['use_constraints', 'access_constraints']]) or (commons and x in commons[0]) for x in [l.title, l.url]]):
+                extras['licence'] = l.id
+                package_dict['license_id'] = l.id
+                extras['licence_url'] = l.url
+                break
+        else:
+            extras['licence'] = "other-open"
+            package_dict['license_id'] = "other-open"
+            extras['licence_url'] = ""
+
         # Grpahic preview
         browse_graphic = iso_values.get('browse-graphic')
         if browse_graphic:
@@ -513,6 +506,7 @@ class SpatialHarvester(HarvesterBase):
             iso_values.get('resource-locator-identification', [])
 
         if len(resource_locators):
+            log.debug("Analyzing resource locators: {0}".format(resource_locators))
             for resource_locator in resource_locators:
                 url = resource_locator.get('url')
                 if url and url.startswith('http') and not url.startswith(
@@ -809,6 +803,14 @@ class SpatialHarvester(HarvesterBase):
 
         package_dict['resources'] = new_res
 
+        original_formats = set([x.get('format', '') for x in old_res])
+        original_formats.discard('')
+        original_formats.discard(None)
+        if len(original_formats) > 0:
+            log.debug('Analyzing resources with formats: {0}'.format(' '.join(original_formats)))
+        else:
+            log.debug('Package dict yields no resources with valid formats.')
+
         discarded_formats = set([x.get('format', '') for x in old_res if test_res(x) is None])
         discarded_formats.discard('')
         discarded_formats.discard(None)
@@ -960,7 +962,7 @@ class SpatialHarvester(HarvesterBase):
         '''
         if config_str:
             self.source_config = json.loads(config_str)
-            log.debug('Using config: %r', self.source_config)
+            #log.debug('Using config: %r', self.source_config)
         else:
             self.source_config = {}
 
