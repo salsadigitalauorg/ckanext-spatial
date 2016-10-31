@@ -782,7 +782,7 @@ class SpatialHarvester(HarvesterBase):
             package_dict = None
 
         if not package_dict:
-            log.error('No package dict returned, aborting import for object {0}'.format(harvest_object.id))
+            log.debug('No package dict returned, aborting import for object {0}'.format(harvest_object.id))
             return False
 
         def test_res(res):
@@ -817,7 +817,7 @@ class SpatialHarvester(HarvesterBase):
             log.debug('Discarding resources with formats: {0}'.format(' '.join(discarded_formats)))
 
         if not package_dict['resources']:
-            log.error('Package dict returned no valid resources for object {0}'.format(harvest_object.id))
+            log.debug('Package dict returned no valid resources for object {0}'.format(harvest_object.id))
 
             # Delete package incase format selection has changed in the config
             if status == 'change':
@@ -944,7 +944,7 @@ class SpatialHarvester(HarvesterBase):
             s = wms.WebMapService(url, xml=xml)
             return isinstance(s.contents, dict) and s.contents != {}
         except Exception, e:
-            log.error('WMS check for %s failed with exception: %s' % (url, str(e)))
+            log.debug('WMS check for %s failed with exception: %s' % (url, str(e)))
         return False
 
     def _get_object_extra(self, harvest_object, key):
