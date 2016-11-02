@@ -570,7 +570,7 @@ class SpatialHarvester(HarvesterBase):
                                     extras['spatial'] = extent_string.strip()
                                     extras['spatial_coverage'] = extras['spatial']
                         except Exception, e:
-                            log.error('WMS check for %s failed with exception: %s' % (url, str(e)))
+                            log.debug('WMS check for %s failed with exception: %s' % (url, str(e)))
 
                     resource.update(
                         {
