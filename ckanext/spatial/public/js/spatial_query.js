@@ -211,12 +211,10 @@ this.ckan.module('spatial-query', function ($, _) {
 
       $('#dataset-map-clear').on('click', clearMap)
 
-      // OK add the expander
-      $('.leaflet-control-draw a', module.el)
-        .add($('.show-map-link', map_nav))
-        .on('click', function() {
+      function loadTheMap() {
           if (!is_exanded) {
             map_nav.hide();
+            $('#dataset-map-container').removeClass('minimal-map');
             $('body').addClass('dataset-map-expanded');
 
             if (!extentLayer) {
@@ -229,7 +227,12 @@ this.ckan.module('spatial-query', function ($, _) {
             resetMap();
             is_exanded = true;
           }
-      });
+      }
+
+      // OK add the expander
+      $('.leaflet-control-draw a', module.el)
+        .add($('.show-map-link', map_nav))
+        .on('click', loadTheMap);
       $('.show-map-link i', map_nav).on('click', function(e){
         window.location.href = $('#dataset-map-clear').attr('href');
         e.stopPropagation();
@@ -245,6 +248,7 @@ this.ckan.module('spatial-query', function ($, _) {
 
         map_nav.show();
         $('body').removeClass('dataset-map-expanded  dataset-map-layer-drawn');
+        $('#dataset-map-container').addClass('minimal-map');
         show_map_link.parent().removeClass('active');
 
         var show_form = $('.extended-map-show-form a');
@@ -320,7 +324,9 @@ this.ckan.module('spatial-query', function ($, _) {
       setPreviousExtent();
       if(!$('body').is('.dataset-map-layer-drawn')){
         setTimeout(function() {
-          $('#dataset-map-container').css('position', 'absolute');
+          // $('#dataset-map-container').css('position', 'relative');
+          $('#dataset-map-container').addClass('minimal-map');
+          $('.minimal-map').on('click', loadTheMap);
         }, 0);
       }
 

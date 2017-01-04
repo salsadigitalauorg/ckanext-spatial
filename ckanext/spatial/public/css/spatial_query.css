@@ -267,3 +267,7 @@ div[style*="crosshair"] .leaflet-clickable{
     display: none;
   }
 }
+
+.dataset-map #dataset-map-container.minimal-map .leaflet-control-container {
+  display: none;
+}
