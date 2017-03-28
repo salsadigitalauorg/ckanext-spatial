@@ -32,11 +32,12 @@
       var mapConfig = mapConfig || {type: 'stamen'};
       var leafletMapOptions = leafletMapOptions || {};
       var leafletBaseLayerOptions = jQuery.extend(leafletBaseLayerOptions, {
-                maxZoom: 18
+                maxZoom: 6,
+                minZoom: 3,
                 });
 
       var baseLayer;
-      
+
       map = new L.Map(container, leafletMapOptions);
 
       if (mapConfig.type == 'mapbox') {
@@ -73,7 +74,7 @@
               wmsOptions['crs'] = mapConfig['wms.srs'] || mapConfig['wms.crs'];
           }
           wmsOptions['version'] = mapConfig['wms.version'] || '1.1.1';
-          
+
           baseLayer = new L.TileLayer.WMS(baseLayerUrl, wmsOptions);
 
       } else {

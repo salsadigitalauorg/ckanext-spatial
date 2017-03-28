@@ -92,7 +92,8 @@ this.ckan.module('spatial-query', function ($, _) {
         this.options.map_config,
         {
           attributionControl: false,
-          drawControlTooltips: false
+          // drawControlTooltips: false,
+          maxBounds:([[-20, 100],[-50, 160]])
         }
       );
 

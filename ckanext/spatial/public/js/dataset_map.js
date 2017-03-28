@@ -60,7 +60,8 @@ this.ckan.module('dataset-map', function (jQuery, _) {
           return false;
       }
 
-      map = ckan.commonLeafletMap('dataset-map-container', this.options.map_config, {attributionControl: false});
+      map = ckan.commonLeafletMap('dataset-map-container', this.options.map_config, {attributionControl: false, zoomControl: false, scrollWheelZoom: false, dragging: false,
+                                        doubleClickZoom:false, boxZoom:false });
 
       var ckanIcon = L.Icon.extend({options: this.options.styles.point});
 
