@@ -190,7 +190,7 @@ class SpatialQuery(p.SingletonPlugin):
                 if not (geometry['type'] == 'Polygon'
                    and len(geometry['coordinates']) == 1
                    and len(geometry['coordinates'][0]) == 5):
-                    log.debug('Solr backend only supports bboxes, ignoring geometry {0}'.format(pkg_dict['extras_spatial']))
+                    log.debug('Solr backend only supports bboxes (Polygons with 5 points), ignoring geometry {0}'.format(pkg_dict['extras_spatial']))
                     return pkg_dict
 
                 coords = geometry['coordinates']
@@ -403,15 +403,6 @@ class CatalogueServiceWeb(p.SingletonPlugin):
         config.setdefault("cswservice.contact_role", "")
 
         config["cswservice.rndlog_threshold"] = float(config.get("cswservice.rndlog_threshold", "0.01"))
-
-    def before_map(self, route_map):
-        c = "ckanext.spatial.controllers.csw:CatalogueServiceWebController"
-        route_map.connect("/csw", controller=c, action="dispatch_get",
-                          conditions={"method": ["GET"]})
-        route_map.connect("/csw", controller=c, action="dispatch_post",
-                          conditions={"method": ["POST"]})
-
-        return route_map
 
     def after_map(self, route_map):
         return route_map
