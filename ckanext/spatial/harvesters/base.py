@@ -668,7 +668,7 @@ class SpatialHarvester(HarvesterBase):
 
         # Get the last harvested object (if any)
         previous_object = model.Session.query(HarvestObject) \
-                          .filter(HarvestObject.guid==harvest_object.guid) \
+                          .filter(HarvestObject.guid==harvest_object.guid, HarvestObject.harvest_source_id==harvest_object.harvest_source_id) \
                           .filter(HarvestObject.current==True) \
                           .first()
 

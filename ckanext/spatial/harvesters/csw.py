@@ -79,9 +79,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
         query = model.Session.execute(
             '''select harvest_object.guid, package.id from package
                inner join harvest_object on package.id = harvest_object.package_id
-               where harvest_object.harvest_source_id = '{source_id}'
-               order by harvest_object.current desc, package.state asc, harvest_object.gathered desc;'''.format(
-                source_id=harvest_job.source.id))
+               order by harvest_object.current desc, package.state asc, harvest_object.gathered desc;''')
         guid_to_package_id = {}
 
         for guid, package_id in query:
@@ -89,6 +87,17 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
                 guid_to_package_id[guid] = package_id
 
         guids_in_db = set(guid_to_package_id.keys())
+
+        query = model.Session.execute(
+            '''select harvest_object.guid, package.id from package
+               inner join harvest_object on package.id = harvest_object.package_id
+               where harvest_object.harvest_source_id = '{source_id}'
+               order by harvest_object.current desc, package.state asc, harvest_object.gathered desc;'''.format(
+                source_id=harvest_job.source.id))
+
+        guids_for_source = set()
+        for guid, package_id in query:
+            guids_for_source.add(guid)
 
         # extract cql filter if any
         cql = self.source_config.get('cql')
@@ -115,8 +124,8 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
             return None
 
         new = guids_in_harvest - guids_in_db
-        delete = guids_in_db - guids_in_harvest
-        change = guids_in_db & guids_in_harvest
+        delete = guids_for_source - guids_in_harvest
+        change = guids_for_source & guids_in_harvest
 
         ids = []
         for guid in new:
@@ -135,7 +144,7 @@ class CSWHarvester(SpatialHarvester, SingletonPlugin):
                                 package_id=guid_to_package_id[guid],
                                 extras=[HOExtra(key='status', value='delete')])
             model.Session.query(HarvestObject). \
-                filter_by(guid=guid). \
+                filter_by(guid=guid, harvest_source_id=harvest_job.source.id). \
                 update({'current': False}, False)
             obj.save()
             ids.append(obj.id)
