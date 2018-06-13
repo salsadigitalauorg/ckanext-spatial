@@ -127,7 +127,7 @@ class SpatialHarvester(HarvesterBase):
     ''')
 
     target_formats = list(set(map(lambda x: x.upper(), p.toolkit.aslist(config.get('ckanext.spatial.harvest.csw_harvested_formats',
-                                                                                   'csv xls wms wfs wcs sos csw arcims arcgis_rest shp arcgrid kml zip')))))
+                                                                                   'csv xls wms wfs wcs sos csw arcims arcgis_rest shp arcgrid kml zip html')))))
 
     licenses = model.Package.get_license_register().values()
 
@@ -197,10 +197,10 @@ class SpatialHarvester(HarvesterBase):
                                       'Australian Bureau of Meteorology': 'bureauofmeteorology',
                                       'Bureau of Meteorology': 'bureauofmeteorology',
                                       'Australian Electoral Commission (AEC)': 'australianelectoralcommission',
-                                      'Australian Government Department of Sustainability, Environment, Water, Population and Communities': 'departmentofenvironment',
-                                      'Australian Government Department of the Environment': 'departmentofenvironment',
-                                      'Australian Governement Department of the Environment and Water Resources': 'departmentofenvironment',
-                                      'Department of the Environment': 'departmentofenvironment',
+                                      'Australian Government Department of Sustainability, Environment, Water, Population and Communities': 'doee',
+                                      'Australian Government Department of the Environment': 'doee',
+                                      'Australian Governement Department of the Environment and Water Resources': 'doee',
+                                      'Department of the Environment': 'doee',
                                       'Antarctic CRC - The University of Tasmania': 'commonwealthscientificandindustrialresearchorganisation',
                                       'Australian Institute of Marine Science (AIMS)': 'Australian Institute of Marine Science',
                                       'AU/AADC > Australian Antarctic Data Centre, Australia': 'australianantarcticdivision',
@@ -593,6 +593,20 @@ class SpatialHarvester(HarvesterBase):
 
         if iso_values['source'] and 'ga.gov.au' in iso_values['source']:
             package_dict['notes'] = package_dict['notes'] + "\n\nYou can also purchase hard copies of Geoscience Australia data and other products at http://www.ga.gov.au/products-services/how-to-order-products/sales-centre.html"
+
+        if 'environment.gov.au' in harvest_object.source.url:
+            package_dict['notes'] += '\n'.join(iso_values['limitations-on-public-access'])
+            package_dict['source'] = 'https://www.environment.gov.au/fed/catalog/search/resource/details.page?uuid=%s' \
+                                     % harvest_object.guid
+            package_dict['resources'].append(
+                {
+                    'url': 'https://www.environment.gov.au/fed/catalog/search/resource/details.page?uuid=%s'
+                           % harvest_object.guid,
+                    'name': package_dict['title'],
+                    'description': ', '.join([x['name'] for x in iso_values.get('data-format', [])]),
+                    'format': 'html',
+                    'last_modified': iso_values.get('date-updated', '')
+                })
 
         # AGLS mapping
         if iso_values['source']:

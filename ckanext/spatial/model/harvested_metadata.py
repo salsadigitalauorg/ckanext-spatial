@@ -830,6 +830,7 @@ class ISODocument(MappedXmlDocument):
             name="data-format",
             search_paths=[
                 "gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format",
+                "gmd:distributionInfo/gmd:MD_Distribution/gmd:distributor/gmd:MD_Distributor/gmd:distributorFormat/gmd:MD_Format",
             ],
             multiplicity="*",
         ),
