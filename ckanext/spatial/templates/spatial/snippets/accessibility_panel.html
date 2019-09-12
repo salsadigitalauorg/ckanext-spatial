@@ -2,7 +2,7 @@
 
   <div class="extended-map-show-form">
     {% block extended_map_form_switcher %}
-      <a href="javascript:;" class="btn btn-primary">{{ _('Enter coordinates') }}</a>
+      <a href="javascript:;" class="btn btn-primary enter-coordinates">{{ _('Enter coordinates') }}</a>
     {% endblock %}
   </div>
   {% block extended_map_form %}
@@ -37,14 +37,150 @@
     </div>
   {% endblock %}
   {% block extended_map_help %}
-    <div class="extended-map-help">
-      {% trans %}
-        <ul>
-          Select a location extent by:
-          <li>Drawing an extent box, or</li>
-          <li>Enter the latitude and longitude coordinates.</li>
-        </ul>
+      <div class="extended-map-help">
+          <select class="select2" id="lga-selector">
+              <option value="ALBURY CITY">Albury City</option>
+              <option value="ARMIDALE REGIONAL">Armidale Regional</option>
+              <option value="BALLINA">Ballina</option>
+              <option value="BALRANALD">Balranald</option>
+              <option value="BATHURST REGIONAL">Bathurst Regional</option>
+              <option value="BAYSIDE">Bayside</option>
+              <option value="BEGA VALLEY">Bega Valley</option>
+              <option value="BELLINGEN">Bellingen</option>
+              <option value="BERRIGAN">Berrigan</option>
+              <option value="BLACKTOWN">Blacktown</option>
+              <option value="BLAND">Bland</option>
+              <option value="BLAYNEY">Blayney</option>
+              <option value="BLUE MOUNTAINS">Blue Mountains</option>
+              <option value="BOGAN">Bogan</option>
+              <option value="BOURKE">Bourke</option>
+              <option value="BREWARRINA">Brewarrina</option>
+              <option value="BROKEN HILL">Broken Hill</option>
+              <option value="BURWOOD">Burwood</option>
+              <option value="BYRON">Byron</option>
+              <option value="CABONNE">Cabonne</option>
+              <option value="CAMDEN">Camden</option>
+              <option value="CAMPBELLTOWN">Campbelltown</option>
+              <option value="CANADA BAY">Canada Bay</option>
+              <option value="CANTERBURY-BANKSTOWN">Canterbury-bankstown</option>
+              <option value="CARRATHOOL">Carrathool</option>
+              <option value="CENTRAL COAST">Central Coast</option>
+              <option value="CENTRAL DARLING">Central Darling</option>
+              <option value="CESSNOCK">Cessnock</option>
+              <option value="CITY OF PARRAMATTA">City Of Parramatta</option>
+              <option value="CLARENCE VALLEY">Clarence VAlley</option>
+              <option value="COBAR">Cobar</option>
+              <option value="COFFS HARBOUR">Coffs Harbour</option>
+              <option value="COOLAMON">Coolamon</option>
+              <option value="COONAMBLE">Coonamble</option>
+              <option value="COOTAMUNDRA-GUNDAGAI REGIONAL">Cootamundra-gundagai Regional</option>
+              <option value="COWRA">Cowra</option>
+              <option value="CUMBERLAND">Cumberland</option>
+              <option value="DUBBO REGIONAL">Dubbo Regional</option>
+              <option value="DUNGOG">Dungog</option>
+              <option value="EDWARD RIVER">Edward River</option>
+              <option value="EUROBODALLA">Eurobodalla</option>
+              <option value="FAIRFIELD">Fairfield</option>
+              <option value="FEDERATION">Federation</option>
+              <option value="FORBES">Forbes</option>
+              <option value="GEORGES RIVER">Georges River</option>
+              <option value="GILGANDRA">Gilgandra</option>
+              <option value="GLEN INNES SEVERN">Glen Innes Severn</option>
+              <option value="GOULBURN MULWAREE">Goulburn Mulwaree</option>
+              <option value="GREATER HUME SHIRE">Greater Hume Shire</option>
+              <option value="GRIFFITH">Griffith</option>
+              <option value="GUNNEDAH">Gunnedah</option>
+              <option value="GWYDIR">Gwydir</option>
+              <option value="HAWKESBURY">Hawkesbury</option>
+              <option value="HAY">Hay</option>
+              <option value="HILLTOPS">Hilltops</option>
+              <option value="HORNSBY">Hornsby</option>
+              <option value="HUNTERS HILL">Hunters Hill</option>
+              <option value="INNER WEST">Inner West</option>
+              <option value="INVERELL">Inverell</option>
+              <option value="JUNEE">Junee</option>
+              <option value="KEMPSEY">Kempsey</option>
+              <option value="KIAMA">Kiama</option>
+              <option value="KU-RING-GAI">Ku-ring-gai</option>
+              <option value="KYOGLE">Kyogle</option>
+              <option value="LACHLAN">Lachlan</option>
+              <option value="LAKE MACQUARIE">Lake Macquarie</option>
+              <option value="LANE COVE">Lane Cove</option>
+              <option value="LEETON">Leeton</option>
+              <option value="LISMORE">Lismore</option>
+              <option value="LITHGOW CITY">Lithgow City</option>
+              <option value="LIVERPOOL">Liverpool</option>
+              <option value="LIVERPOOL PLAINS">Liverpool Plains</option>
+              <option value="LOCKHART">Lockhart</option>
+              <option value="LORD HOWE ISLAND - UNINCORPORATED AREA">Lord Howe Island - Unincorporated Area</option>
+              <option value="MAITLAND">Maitland</option>
+              <option value="MID-COAST">Mid-coast</option>
+              <option value="MID-WESTERN REGIONAL">Mid-western Regional</option>
+              <option value="MOREE PLAINS">Moree Plains</option>
+              <option value="MOSMAN">Mosman</option>
+              <option value="MURRAY RIVER">Murray River</option>
+              <option value="MURRUMBIDGEE">Murrumbidgee</option>
+              <option value="MUSWELLBROOK">Muswellbrook</option>
+              <option value="NAMBUCCA">Nambucca</option>
+              <option value="NARRABRI">Narrabri</option>
+              <option value="NARRANDERA">Narrandera</option>
+              <option value="NARROMINE">Narromine</option>
+              <option value="NEWCASTLE">Newcastle</option>
+              <option value="NORTHERN BEACHES">Northern Beaches</option>
+              <option value="NORTH SYDNEY">North Sydney</option>
+              <option value="OBERON">Oberon</option>
+              <option value="ORANGE">Orange</option>
+              <option value="PARKES">Parkes</option>
+              <option value="PENRITH">Penrith</option>
+              <option value="PORT MACQUARIE-HASTINGS">Port Macquarie-hastings</option>
+              <option value="PORT STEPHENS">Port Stephens</option>
+              <option value="QUEANBEYAN-PALERANG REGIONAL">Queanbeyan-palerang Regional</option>
+              <option value="RANDWICK">Randwick</option>
+              <option value="RICHMOND VALLEY">Richmond Valley</option>
+              <option value="RYDE">Ryde</option>
+              <option value="SHELLHARBOUR">Shellharbour</option>
+              <option value="SHOALHAVEN">Shoalhaven</option>
+              <option value="SINGLETON">Singleton</option>
+              <option value="SNOWY MONARO REGIONAL">Snowy Monaro Regional</option>
+              <option value="SNOWY VALLEYS">Snowy Valleys</option>
+              <option value="STRATHFIELD">Strathfield</option>
+              <option value="SUTHERLAND SHIRE">Sutherland Shire</option>
+              <option value="SYDNEY">Sydney</option>
+              <option value="TAMWORTH REGIONAL">Tamworth Regional</option>
+              <option value="TEMORA">Temora</option>
+              <option value="TENTERFIELD">Tenterfield</option>
+              <option value="THE HILLS SHIRE">The Hills Shire</option>
+              <option value="TWEED">Tweed</option>
+              <option value="UNINCORPORATED">Unincorporated</option>
+              <option value="UPPER HUNTER">Upper Hunter</option>
+              <option value="UPPER LACHLAN SHIRE">Upper Lachlan Shire</option>
+              <option value="URALLA">Uralla</option>
+              <option value="WAGGA WAGGA">Wagga Wagga</option>
+              <option value="WALCHA">Walcha</option>
+              <option value="WALGETT">Walgett</option>
+              <option value="WARREN">Warren</option>
+              <option value="WARRUMBUNGLE">Warrumbungle</option>
+              <option value="WAVERLEY">Waverley</option>
+              <option value="WEDDIN">Weddin</option>
+              <option value="WENTWORTH">Wentworth</option>
+              <option value="WILLOUGHBY">Willoughby</option>
+              <option value="WINGECARRIBEE">Wingecarribee</option>
+              <option value="WOLLONDILLY">Wollondilly</option>
+              <option value="WOLLONGONG">Wollongong</option>
+              <option value="WOOLLAHRA">Woollahra</option>
+              <option value="YASS VALLEY">Yass Valley</option>
+          </select>
+
+          <button class="btn btn-primary zone-selector" data-zone="NSW">NSW</button>
+          <button class="btn btn-primary zone-selector" data-zone="AUSTRALIA">{{ _('Australia') }}</button>
+
+          {% trans %}
+          <ul>
+              Select a location extent by:
+              <li>Drawing an extent box, or</li>
+              <li>Enter the latitude and longitude coordinates.</li>
+          </ul>
       {% endtrans %}
-    </div>
+      </div>
   {% endblock %}
 </div>

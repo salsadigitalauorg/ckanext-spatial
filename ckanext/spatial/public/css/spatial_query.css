@@ -140,7 +140,7 @@ div[style*="crosshair"] .leaflet-clickable{
 .active ~ .extended-map-help{
   display: none;
 }
-.dataset-map-layer-drawn .extended-map-form,
+
 .active ~ .extended-map-form{
   display: block;
 }
