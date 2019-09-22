@@ -169,15 +169,17 @@
               <option value="WOLLONGONG">Wollongong</option>
               <option value="WOOLLAHRA">Woollahra</option>
               <option value="YASS VALLEY">Yass Valley</option>
+              <option data-zone="NSW" value="NSW">NSW</option>
+              <option data-zone="AUSTRALIA" value="AUSTRALIA">{{ _('Australia') }}</option>
           </select>
 
-          <button class="btn btn-primary zone-selector" data-zone="NSW">NSW</button>
-          <button class="btn btn-primary zone-selector" data-zone="AUSTRALIA">{{ _('Australia') }}</button>
+<!--           <button class="btn btn-primary zone-selector" data-zone="NSW">NSW</button>
+          <button class="btn btn-primary zone-selector" data-zone="AUSTRALIA">{{ _('Australia') }}</button> -->
 
           {% trans %}
           <ul>
               Select a location extent by:
-              <li>Drawing an extent box, or</li>
+              <li>Drawing an extent box ( click anywhere on the map for drawing toolkit ), or</li>
               <li>Enter the latitude and longitude coordinates.</li>
           </ul>
       {% endtrans %}
