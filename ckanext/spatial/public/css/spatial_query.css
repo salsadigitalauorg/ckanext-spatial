@@ -113,6 +113,15 @@ div[style*="crosshair"] .leaflet-clickable{
 #dataset-map .module-footer{
   border-top: none;
 }
+#dataset-map .legend { display: none;}
+#dataset-map .legend dd{
+    margin: 5px 20px;
+}
+.dataset-map-expanded #dataset-map .legend {
+    display: block;
+    padding: 0 10px;
+}
+
 .dataset-map-expanded #dataset-map,
 .dataset-map-expanded #dataset-map-clear,
 .dataset-map-layer-drawn #dataset-map #dataset-map-attribution,

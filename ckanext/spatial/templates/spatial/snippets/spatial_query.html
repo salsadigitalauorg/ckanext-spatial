@@ -17,6 +17,31 @@ e.g.
     {{ _('Location') }}
     <a id="dataset-map-clear" href="{{ h.remove_url_param(['ext_bbox','ext_prev_extent', 'ext_location']) }}" class="action">{{ _('Clear map') }}</a>
   </h2>
+  <div class="legend">
+      <dl>
+          <dt>
+              <i class="icon icon-pencil"></i>
+              {{ _('Polygon') }}
+          </dt>
+          <dd>
+              {{ _('To draw the shape you want, click a start point on the map and drag and click an endpoint; continue this to draw shape and finish at the start point.') }}
+          </dd>
+          <dt>
+              <i class="icon icon-edit"></i>
+              {{ _('Rectangle') }}
+          </dt>
+          <dd>
+              {{ _('Select a square area on the map.') }}
+          </dd>
+          <dt>
+              <i class="icon icon-map-marker"></i>
+              {{ _('Point') }}
+          </dt>
+          <dd>
+              {{ _('Add a marker at a specific location.') }}
+          </dd>
+      </dl>
+  </div>
   <ul class="unstyled nav nav-simple nav-facet nav-dataset-map" id="dataset-map-nav">
     <li class="nav-item">
         <a href="#" class="show-map-link">{{ _('Select location extent') }}
@@ -37,4 +62,3 @@ e.g.
 </section>
 
 {% resource 'ckanext-spatial/spatial_query' %}
-
