@@ -275,7 +275,11 @@ this.ckan.module('spatial-query', function($, _) {
       // OK add the expander
       $('.leaflet-control-draw a', module.el)
         .add($('.show-map-link', map_nav))
-        .on('click', loadTheMap);
+        .on('click', loadTheMap)
+        .on('click.spatial-set-active', function(event) {
+          $('.leaflet-bar-part', module.el).removeClass('active');
+          $(this).addClass('active');
+        });
       $('.show-map-link i', map_nav).on('click', function(e) {
         window.location.href = $('#dataset-map-clear').attr('href');
         e.stopPropagation();
@@ -356,6 +360,7 @@ this.ckan.module('spatial-query', function($, _) {
       map.on(
         'draw:rectangle-created draw:poly-created draw:marker-created',
         function(e) {
+          $('.leaflet-bar-part', module.el).removeClass('active');
           bbox_preparations();
           var shape, shapeName;
           var match = e.type.match('draw:(\\w+)-created');
