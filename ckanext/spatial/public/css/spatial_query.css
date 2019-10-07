@@ -114,8 +114,9 @@ div[style*="crosshair"] .leaflet-clickable{
   border-top: none;
 }
 #dataset-map .legend { display: none;}
-#dataset-map .legend dd{
-    margin: 5px 20px;
+
+#dataset-map .legend ul{
+    margin: 10px 5px;
 }
 .dataset-map-expanded #dataset-map .legend {
     display: block;
