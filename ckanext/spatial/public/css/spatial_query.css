@@ -118,6 +118,11 @@ div[style*="crosshair"] .leaflet-clickable{
 #dataset-map .legend ul{
     margin: 10px 5px;
 }
+#dataset-map .legend ul li {
+    margin-left: 40px;
+    text-indent: -40px;
+}
+
 .dataset-map-expanded #dataset-map .legend {
     display: block;
     padding: 0 10px;
