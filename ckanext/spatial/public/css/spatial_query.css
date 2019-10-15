@@ -46,7 +46,7 @@
 }
 .extended-map-show-form{
   text-align: center;
-  padding-bottom: 10px;
+  padding-bottom: 40px;
 }
 .leaflet-control-draw-rectangle {
   background-image: url("../img/pencil.png");
@@ -119,8 +119,13 @@ div[style*="crosshair"] .leaflet-clickable{
     margin: 10px 5px;
 }
 #dataset-map .legend ul li {
-    margin-left: 40px;
-    text-indent: -40px;
+    margin-left: 55px;
+    text-indent: -55px;
+}
+
+#dataset-map .legend ul li p {
+    margin-bottom: 0;
+    text-indent: 0;
 }
 
 .dataset-map-expanded #dataset-map .legend {
