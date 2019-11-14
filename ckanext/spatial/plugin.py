@@ -227,6 +227,9 @@ class SpatialQuery(p.SingletonPlugin):
                 if not wkt:
                     shape = shapely.geometry.asShape(geometry)
                     if not shape.is_valid:
+                        shape = shapely.geometry.asMultiPolygon([shape])
+
+                    if not shape.is_valid:
                         log.error('Wrong geometry, not indexing')
                         return pkg_dict
                     wkt = shape.wkt
