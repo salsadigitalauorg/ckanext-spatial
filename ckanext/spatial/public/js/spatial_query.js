@@ -3,53 +3,53 @@
 // "use strict";
 // var L, map, ckan;
 
-this.ckan.module('spatial-query', function($, _) {
+this.ckan.module("spatial-query", function($, _) {
   L.Control.Arrow = L.Control.extend({
     options: {
-      position: 'topleft'
+      position: "topleft"
     },
 
     onAdd: function(map) {
-      var arrowName = 'leaflet-control-arrow',
-        barName = 'leaflet-bar',
-        partName = barName + '-part',
-        container = L.DomUtil.create('div', arrowName + ' ' + barName);
+      var arrowName = "leaflet-control-arrow",
+        barName = "leaflet-bar",
+        partName = barName + "-part",
+        container = L.DomUtil.create("div", arrowName + " " + barName);
 
       this._map = map;
 
       this._moveUpButton = this._createButton(
-        '',
-        'Move up',
-        arrowName + '-up ' + partName + ' ' + partName + '-up',
+        "",
+        "Move up",
+        arrowName + "-up " + partName + " " + partName + "-up",
         container,
-        this._move('up'),
+        this._move("up"),
         this
       );
 
       this._moveLeftButton = this._createButton(
-        '',
-        'Move left',
-        arrowName + '-left ' + partName + ' ' + partName + '-left',
+        "",
+        "Move left",
+        arrowName + "-left " + partName + " " + partName + "-left",
         container,
-        this._move('left'),
+        this._move("left"),
         this
       );
 
       this._moveRightButton = this._createButton(
-        '',
-        'Move right',
-        arrowName + '-right ' + partName + ' ' + partName + '-right',
+        "",
+        "Move right",
+        arrowName + "-right " + partName + " " + partName + "-right",
         container,
-        this._move('right'),
+        this._move("right"),
         this
       );
 
       this._moveDownButton = this._createButton(
-        '',
-        'Move down',
-        arrowName + '-down ' + partName + ' ' + partName + '-down',
+        "",
+        "Move down",
+        arrowName + "-down " + partName + " " + partName + "-down",
         container,
-        this._move('down'),
+        this._move("down"),
         this
       );
 
@@ -63,16 +63,16 @@ this.ckan.module('spatial-query', function($, _) {
       var self = this;
 
       switch (direction) {
-        case 'up':
+        case "up":
           d[1] = -10;
           break;
-        case 'down':
+        case "down":
           d[1] = 10;
           break;
-        case 'left':
+        case "left":
           d[0] = -10;
           break;
-        case 'right':
+        case "right":
           d[0] = 10;
           break;
       }
@@ -82,18 +82,18 @@ this.ckan.module('spatial-query', function($, _) {
     },
 
     _createButton: function(html, title, className, container, fn, context) {
-      var link = L.DomUtil.create('a', className, container);
+      var link = L.DomUtil.create("a", className, container);
       link.innerHTML = html;
-      link.href = '#';
+      link.href = "#";
       link.title = title;
 
       var stop = L.DomEvent.stopPropagation;
 
-      L.DomEvent.on(link, 'click', stop)
-        .on(link, 'mousedown', stop)
-        .on(link, 'dblclick', stop)
-        .on(link, 'click', L.DomEvent.preventDefault)
-        .on(link, 'click', fn, context);
+      L.DomEvent.on(link, "click", stop)
+        .on(link, "mousedown", stop)
+        .on(link, "dblclick", stop)
+        .on(link, "click", L.DomEvent.preventDefault)
+        .on(link, "click", fn, context);
 
       return link;
     }
@@ -103,11 +103,12 @@ this.ckan.module('spatial-query', function($, _) {
     options: {
       i18n: {},
       style: {
-        color: '#F06F64',
+        color: "#F06F64",
         weight: 2,
         opacity: 1,
-        fillColor: '#F06F64',
-        fillOpacity: 0.1
+        fillColor: "#F06F64",
+        fillOpacity: 0.1,
+        clickable: false
       },
       default_extent: [[90, 180], [-90, -180]],
       draw_default: false
@@ -117,14 +118,14 @@ this.ckan.module('spatial-query', function($, _) {
         '<div id="dataset-map-edit-buttons">',
         '<a href="javascript:;" class="btn cancel">Cancel</a> ',
         '<a href="javascript:;" class="btn apply disabled">Apply</a>',
-        '</div>'
-      ].join('')
+        "</div>"
+      ].join("")
     },
 
     initialize: function() {
       $.proxyAll(this, /_on/);
 
-      var user_default_extent = this.el.data('default_extent');
+      var user_default_extent = this.el.data("default_extent");
       if (user_default_extent) {
         if (user_default_extent instanceof Array) {
           // Assume it's a pair of coords like [[90, 180], [-90, -180]]
@@ -140,10 +141,10 @@ this.ckan.module('spatial-query', function($, _) {
     },
 
     _getParameterByName: function(name) {
-      var match = RegExp('[?&]' + name + '=([^&]*)').exec(
+      var match = RegExp("[?&]" + name + "=([^&]*)").exec(
         window.location.search
       );
-      return match ? decodeURIComponent(match[1].replace(/\+/g, ' ')) : null;
+      return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : null;
     },
 
     _drawExtentFromCoords: function(xmin, ymin, xmax, ymax) {
@@ -169,12 +170,12 @@ this.ckan.module('spatial-query', function($, _) {
       var is_exanded = false;
       var should_zoom = true;
       var default_drawn = false;
-      var form = $('#dataset-search');
-      var map_attribution = $('#dataset-map-attribution');
-      var map_nav = $('#dataset-map-nav');
-      var show_map_link = $('.show-map-link', map_nav);
+      var form = $("#dataset-search");
+      var map_attribution = $("#dataset-map-attribution");
+      var map_nav = $("#dataset-map-nav");
+      var show_map_link = $(".show-map-link", map_nav);
       var makeIcon = L.icon({
-        iconUrl: 'marker.png',
+        iconUrl: "marker.png",
         // shadowUrl: 'leaf-shadow.png',
         iconSize: [38, 42], // size of the icon
         iconAnchor: [22, 42] // point of the icon which will correspond to marker's location
@@ -183,12 +184,12 @@ this.ckan.module('spatial-query', function($, _) {
       });
       // CKAN 2.1
       if (!form.length) {
-        form = $('.search-form');
+        form = $(".search-form");
       }
-      var aFields = ['west-lng', 'south-lat', 'east-lng', 'north-lat'];
+      var aFields = ["west-lng", "south-lat", "east-lng", "north-lat"];
       var aForm = [];
       for (var f in aFields) {
-        aForm.push($('#' + aFields[f]));
+        aForm.push($("#" + aFields[f]));
       }
 
       var buttons;
@@ -197,16 +198,16 @@ this.ckan.module('spatial-query', function($, _) {
       $.each(aForm, function(i, o) {
         jqaForm = jqaForm.add(o);
       });
-      jqaForm.on('change', function(e) {
+      jqaForm.on("change", function(e) {
         $(e.target)
           .next()
           .text(parseFloat(e.target.value, 5).toFixed(1));
       });
 
       // Add necessary fields to the search form if not already created
-      $(['ext_bbox', 'ext_prev_extent', 'ext_bbox_type', 'ext_bbox_lga']).each(
+      $(["ext_bbox", "ext_prev_extent", "ext_bbox_type", "ext_bbox_lga"]).each(
         function(index, item) {
-          if ($('#' + item).length === 0) {
+          if ($("#" + item).length === 0) {
             $('<input type="hidden" />')
               .attr({ id: item, name: item })
               .appendTo(form);
@@ -215,17 +216,17 @@ this.ckan.module('spatial-query', function($, _) {
       );
       var bbox_type = window.location.search
         .slice(1)
-        .split('&')
+        .split("&")
         .find(function(part) {
-          return 0 === part.indexOf('ext_bbox_type=');
+          return 0 === part.indexOf("ext_bbox_type=");
         });
       if (bbox_type) {
-        $('#ext_bbox_type').val(bbox_type.slice(14));
+        $("#ext_bbox_type").val(bbox_type.slice(14));
       }
 
       // OK map time
       map = ckan.commonLeafletMap(
-        'dataset-map-container',
+        "dataset-map-container",
         this.options.map_config,
         { attributionControl: false }
       );
@@ -233,32 +234,32 @@ this.ckan.module('spatial-query', function($, _) {
       // Initialize the draw control
       map.addControl(
         new L.Control.Draw({
-          position: 'topright',
+          position: "topright",
           polyline: false,
           circle: false,
           polygon: {
             shapeOptions: module.options.style,
-            title: 'Draw polygon'
+            title: "Draw polygon"
           },
           marker: {
-            title: 'Set point',
+            title: "Set point",
             icon: makeIcon
           },
           rectangle: {
             shapeOptions: module.options.style,
-            title: 'Draw rectangle'
+            title: "Draw rectangle"
           }
         })
       );
       map.addControl(new L.Control.Arrow());
 
-      $('#dataset-map-clear').on('click', clearMap);
+      $("#dataset-map-clear").on("click", clearMap);
 
       function loadTheMap() {
         if (!is_exanded) {
           map_nav.hide();
-          $('#dataset-map-container').removeClass('minimal-map');
-          $('body').addClass('dataset-map-expanded');
+          $("#dataset-map-container").removeClass("minimal-map");
+          $("body").addClass("dataset-map-expanded");
 
           if (!extentLayer) {
             if (should_zoom) {
@@ -273,20 +274,20 @@ this.ckan.module('spatial-query', function($, _) {
       }
 
       // OK add the expander
-      $('.leaflet-control-draw a', module.el)
-        .add($('.show-map-link', map_nav))
-        .on('click', loadTheMap)
-        .on('click.spatial-set-active', function(event) {
-          $('.leaflet-bar-part', module.el).removeClass('active');
-          $(this).addClass('active');
+      $(".leaflet-control-draw a", module.el)
+        .add($(".show-map-link", map_nav))
+        .on("click", loadTheMap)
+        .on("click.spatial-set-active", function(event) {
+          $(".leaflet-bar-part", module.el).removeClass("active");
+          $(this).addClass("active");
         });
-      $('.show-map-link i', map_nav).on('click', function(e) {
-        window.location.href = $('#dataset-map-clear').attr('href');
+      $(".show-map-link i", map_nav).on("click", function(e) {
+        window.location.href = $("#dataset-map-clear").attr("href");
         e.stopPropagation();
       });
 
-      $('.extended-map-show-form a', module.el).on(
-        'click',
+      $(".extended-map-show-form a", module.el).on(
+        "click",
         toggleCoordinateForm
       );
 
@@ -294,15 +295,15 @@ this.ckan.module('spatial-query', function($, _) {
       buttons = $(module.template.buttons).insertBefore(map_attribution);
 
       // Handle the cancel expanded action
-      $('.cancel', buttons).on('click', function() {
+      $(".cancel", buttons).on("click", function() {
         map_nav.show();
-        $('body').removeClass('dataset-map-expanded  dataset-map-layer-drawn');
-        $('#dataset-map-container').addClass('minimal-map');
-        show_map_link.parent().removeClass('active');
+        $("body").removeClass("dataset-map-expanded  dataset-map-layer-drawn");
+        $("#dataset-map-container").addClass("minimal-map");
+        show_map_link.parent().removeClass("active");
 
-        var show_form = $('.extended-map-show-form a');
-        if (show_form.hasClass('active')) {
-          show_form.trigger('click');
+        var show_form = $(".extended-map-show-form a");
+        if (show_form.hasClass("active")) {
+          show_form.trigger("click");
         }
 
         if (extentLayer) {
@@ -316,10 +317,10 @@ this.ckan.module('spatial-query', function($, _) {
       });
 
       // Handle the apply expanded action
-      $('.apply', buttons).on('click', function(event) {
-        if ($(event.target).hasClass('disabled')) return;
+      $(".apply", buttons).on("click", function(event) {
+        if ($(event.target).hasClass("disabled")) return;
         if (extentLayer) {
-          $('body').removeClass('dataset-map-expanded');
+          $("body").removeClass("dataset-map-expanded");
           is_exanded = false;
           resetMap();
           // Eugh, hacky hack.
@@ -329,17 +330,18 @@ this.ckan.module('spatial-query', function($, _) {
           }, 200);
         }
       });
-      $('#lga-selector')
+      $("#lga-selector")
         .select2()
-        .on('change', function(e) {
+        .on("change", function(e) {
           fetchZone(e.val);
         });
-      $('.zone-selector').on('click', function(e) {
+      $(".zone-selector").on("click", function(e) {
         fetchZone(e.target.dataset.zone);
       });
 
-      $('#extended-map-reset').on('click', resetBBoxToCurrentView);
-      $('#extended-map-update').on('click', function() {
+      // <<<<<<< HEAD
+      $("#extended-map-reset").on("click", resetBBoxToCurrentView);
+      $("#extended-map-update").on("click", function() {
         var c = [];
         for (var i in aForm) {
           c.push(aForm[i].val());
@@ -354,34 +356,45 @@ this.ckan.module('spatial-query', function($, _) {
           drawRect(rect);
           default_drawn = false;
         }
+        // =======
+        //       // When user finishes drawing the box, record it and add it to the map
+        //       map.on('draw:created', function (e) {
+        //         if (extentLayer) {
+        //           map.removeLayer(extentLayer);
+        //         }
+        //         extentLayer = e.layer;
+        //         $('#ext_bbox').val(extentLayer.getBounds().toBBoxString());
+        //         map.addLayer(extentLayer);
+        //         $('.apply', buttons).removeClass('disabled').addClass('btn-primary');
+        // >>>>>>> ds/py3
       });
 
       // When user finishes drawing the box, record it and add it to the map
       map.on(
-        'draw:rectangle-created draw:poly-created draw:marker-created',
+        "draw:rectangle-created draw:poly-created draw:marker-created",
         function(e) {
-          $('.leaflet-bar-part', module.el).removeClass('active');
+          $(".leaflet-bar-part", module.el).removeClass("active");
           bbox_preparations();
           var shape, shapeName;
-          var match = e.type.match('draw:(\\w+)-created');
-          shapeName = match ? match[1] : 'rect';
-          if (shapeName === 'rectangle') {
-            shapeName = 'rect';
+          var match = e.type.match("draw:(\\w+)-created");
+          shapeName = match ? match[1] : "rect";
+          if (shapeName === "rectangle") {
+            shapeName = "rect";
           }
           shape = e[shapeName];
 
           drawRect(shape, shapeName);
 
-          var drawSelectedBtn = $('.extended-map-show-form a');
-          if (drawSelectedBtn.hasClass('active')) {
-            drawSelectedBtn.trigger('click');
+          var drawSelectedBtn = $(".extended-map-show-form a");
+          if (drawSelectedBtn.hasClass("active")) {
+            drawSelectedBtn.trigger("click");
           }
         }
       );
 
       // Record the current map view so we can replicate it after submitting
-      map.on('moveend', function() {
-        $('#ext_prev_extent').val(map.getBounds().toBBoxString());
+      map.on("moveend", function() {
+        $("#ext_prev_extent").val(map.getBounds().toBBoxString());
       });
 
       // Ok setup the default state for the map
@@ -389,31 +402,31 @@ this.ckan.module('spatial-query', function($, _) {
 
       setPreviousBBBox();
       setPreviousExtent();
-      if (!$('body').is('.dataset-map-layer-drawn')) {
+      if (!$("body").is(".dataset-map-layer-drawn")) {
         setTimeout(function() {
           // $('#dataset-map-container').css('position', 'relative');
-          $('#dataset-map-container').addClass('minimal-map');
-          $('.minimal-map').on('click', loadTheMap);
+          $("#dataset-map-container").addClass("minimal-map");
+          $(".minimal-map").on("click", loadTheMap);
         }, 0);
       }
 
       // OK, when we expand we shouldn't zoom then
-      map.on('zoomstart', function() {
+      map.on("zoomstart", function() {
         should_zoom = false;
       });
 
       function fetchZone(zone) {
         module.sandbox.client.call(
-          'GET',
-          'dpi_lga_polygon',
-          '?lga=' + zone,
+          "GET",
+          "dpi_lga_polygon",
+          "?lga=" + zone,
           function(data) {
             var coords = data.result.map(function(item) {
               return item.reverse();
             });
             var polygon = L.polygon(coords, module.options.style);
-            drawRect(polygon, 'poly');
-            $('#ext_bbox_lga').val(zone);
+            drawRect(polygon, "poly");
+            $("#ext_bbox_lga").val(zone);
           },
           console.warn
         );
@@ -431,7 +444,7 @@ this.ckan.module('spatial-query', function($, _) {
           map.removeLayer(extentLayer);
         }
         drawBBox(map.getBounds().toBBoxString());
-        $('body').addClass('dataset-map-layer-drawn');
+        $("body").addClass("dataset-map-layer-drawn");
       }
 
       function drawRect(rect, shapeName) {
@@ -441,26 +454,26 @@ this.ckan.module('spatial-query', function($, _) {
         extentLayer = rect;
         var bbox_string;
         switch (shapeName) {
-          case 'marker':
+          case "marker":
             bbox_string = rect.getLatLng();
-            bbox_string = bbox_string.lng + ' ' + bbox_string.lat;
+            bbox_string = bbox_string.lng + " " + bbox_string.lat;
             break;
-          case 'poly':
+          case "poly":
             bbox_string = rect.getLatLngs().map(function(ll) {
-              return ll.lng + ' ' + ll.lat;
+              return ll.lng + " " + ll.lat;
             });
             bbox_string.push(bbox_string[0]);
-            bbox_string.join(', ');
+            bbox_string.join(", ");
             break;
 
-          case 'rect':
+          case "rect":
           default:
             bbox_string = extentLayer.getBounds().toBBoxString();
             break;
         }
-        $('#ext_bbox').val(bbox_string);
-        $('#ext_bbox_type').val(shapeName);
-        if ('rect' === shapeName) {
+        $("#ext_bbox").val(bbox_string);
+        $("#ext_bbox_type").val(shapeName);
+        if ("rect" === shapeName) {
           fillForm(bbox_string);
         }
         map.addLayer(extentLayer);
@@ -470,7 +483,7 @@ this.ckan.module('spatial-query', function($, _) {
 
       // Is there an existing box from a previous search?
       function setPreviousBBBox() {
-        previous_bbox = module._getParameterByName('ext_bbox');
+        previous_bbox = module._getParameterByName("ext_bbox");
         if (previous_bbox) {
           bbox_preparations();
           drawBBox(previous_bbox);
@@ -481,30 +494,30 @@ this.ckan.module('spatial-query', function($, _) {
 
       function drawBBox(bbox, is_default) {
         default_drawn = is_default;
-        $('#ext_bbox').val(bbox);
-        var shapeName = $('#ext_bbox_type').val();
+        $("#ext_bbox").val(bbox);
+        var shapeName = $("#ext_bbox_type").val();
 
         switch (shapeName) {
-          case 'marker':
-            var latlng = bbox.split(' ');
+          case "marker":
+            var latlng = bbox.split(" ");
             extentLayer = new L.marker([latlng[1], latlng[0]], {
               icon: makeIcon
             });
             fillForm(null);
             break;
-          case 'poly':
-            var polygonPoints = bbox.split(',').map(function(point) {
+          case "poly":
+            var polygonPoints = bbox.split(",").map(function(point) {
               return point
-                .split(' ')
+                .split(" ")
                 .reverse()
                 .map(parseFloat);
             });
             extentLayer = L.polygon(polygonPoints, module.options.style);
             fillForm(null);
             break;
-          case 'rect':
+          case "rect":
           default:
-            extentLayer = module._drawExtentFromCoords(bbox.split(','));
+            extentLayer = module._drawExtentFromCoords(bbox.split(","));
             fillForm(bbox);
             break;
         }
@@ -515,20 +528,20 @@ this.ckan.module('spatial-query', function($, _) {
       // Is there an existing extent from a previous search?
       function setPreviousExtent() {
         previous_extent =
-          module._getParameterByName('ext_bbox') ||
-          module._getParameterByName('ext_prev_extent');
-        var shapeName = $('#ext_bbox_type').val();
+          module._getParameterByName("ext_bbox") ||
+          module._getParameterByName("ext_prev_extent");
+        var shapeName = $("#ext_bbox_type").val();
         if (previous_extent) {
-          var coords = previous_extent.split(',');
+          var coords = previous_extent.split(",");
 
           var prev_bounds;
 
           switch (shapeName) {
-            case 'poly':
-            case 'marker':
+            case "poly":
+            case "marker":
               prev_bounds = module.options.default_extent;
               break;
-            case 'rect':
+            case "rect":
             default:
               prev_bounds = module._drawExtentFromCoords(coords).getBounds();
               break;
@@ -557,15 +570,15 @@ this.ckan.module('spatial-query', function($, _) {
       }
 
       function bbox_preparations() {
-        $('body').addClass('dataset-map-layer-drawn');
-        show_map_link.parent().addClass('active');
+        $("body").addClass("dataset-map-layer-drawn");
+        show_map_link.parent().addClass("active");
       }
 
       function toggleCoordinateForm(event) {
         $(event.target)
-          .toggleClass('active')
+          .toggleClass("active")
           .parent()
-          .toggleClass('active');
+          .toggleClass("active");
 
         if (module.options.draw_default && module.options.default_extent) {
           if (!default_drawn && !extentLayer) {
@@ -580,38 +593,38 @@ this.ckan.module('spatial-query', function($, _) {
 
       function clearMap(event) {
         event && event.preventDefault();
-        $('body').removeClass('dataset-map-layer-drawn');
+        $("body").removeClass("dataset-map-layer-drawn");
         if (extentLayer) {
           map.removeLayer(extentLayer);
         }
-        var ext_bb = $('#ext_bbox');
-        $('#ext_prev_extent').val(ext_bb.val());
-        ext_bb.val('');
+        var ext_bb = $("#ext_bbox");
+        $("#ext_prev_extent").val(ext_bb.val());
+        ext_bb.val("");
         fillForm(null);
         // apply_switch(false);
       }
 
       function fillForm(bounds) {
         if (bounds === null) {
-          $('.extended-map-form input').val('');
-          $('#ext_bbox').val('');
+          $(".extended-map-form input").val("");
+          $("#ext_bbox").val("");
           return;
         }
-        var b = $.map(bounds.split(','), function(e) {
+        var b = $.map(bounds.split(","), function(e) {
           return parseFloat(e).toFixed(1);
         });
 
         for (var i in b) {
-          aForm[i].val(b[i]).trigger('change');
+          aForm[i].val(b[i]).trigger("change");
         }
       }
 
       function apply_switch(state) {
-        var ab = $('.apply', buttons);
+        var ab = $(".apply", buttons);
         if (state) {
-          ab.removeClass('disabled').addClass('btn-primary');
+          ab.removeClass("disabled").addClass("btn-primary");
         } else {
-          ab.removeClass('btn-primary').addClass('disabled');
+          ab.removeClass("btn-primary").addClass("disabled");
         }
       }
     }

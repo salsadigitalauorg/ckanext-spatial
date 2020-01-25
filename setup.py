@@ -16,7 +16,7 @@ setup(
 	url='http://okfn.org',
 	license='AGPL',
 	packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
-	namespace_packages=['ckanext', 'ckanext.spatial'],
+	namespace_packages=['ckanext'],
 	include_package_data=True,
 	zip_safe=False,
 	install_requires=[
@@ -24,13 +24,9 @@ setup(
 	],
 	entry_points=\
 	"""
-    [console_scripts]
-    cswinfo = ckanext.spatial.commands.cswinfo:cswinfo
-
     [ckan.plugins]
     spatial_metadata=ckanext.spatial.plugin:SpatialMetadata
     spatial_query=ckanext.spatial.plugin:SpatialQuery
-    cswserver=ckanext.spatial.plugin:CatalogueServiceWeb
     spatial_harvest_metadata_api=ckanext.spatial.plugin:HarvestMetadataApi
 
     csw_harvester=ckanext.spatial.harvesters:CSWHarvester
@@ -49,6 +45,5 @@ setup(
 
     [ckan.test_plugins]
     test_spatial_plugin = ckanext.spatial.tests.test_plugin.plugin:TestSpatialPlugin
-
 	""",
 )

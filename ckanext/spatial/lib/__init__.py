@@ -1,11 +1,18 @@
+from builtins import str
+from past.builtins import basestring
 import logging
 from string import Template
 
 from ckan.model import Session, Package
-from ckan.lib.base import config
+import ckan.plugins.toolkit as tk
 
 from ckanext.spatial.model import PackageExtent
 from shapely.geometry import asShape
+
+if tk.check_ckan_version("2.9"):
+    config = tk.config
+else:
+    from ckan.lib.base import config
 
 from ckanext.spatial.geoalchemy_common import (WKTElement, ST_Transform,
                                                compare_geometry_fields,
@@ -108,7 +115,7 @@ def validate_bbox(bbox_values):
         bbox['miny'] = float(bbox_values[1])
         bbox['maxx'] = float(bbox_values[2])
         bbox['maxy'] = float(bbox_values[3])
-    except ValueError,e:
+    except ValueError as e:
         return None
 
     return bbox
