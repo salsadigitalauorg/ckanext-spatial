@@ -11,7 +11,7 @@ e.g.
 {% snippet "spatial/snippets/spatial_query.html", default_extent="{ \"type\": \"Polygon\", \"coordinates\": [[[74.89, 29.39],[74.89, 38.45], [60.50, 38.45], [60.50, 29.39], [74.89, 29.39]]]}" %}
 
 #}
-{% with bbox = request.GET.ext_bbox, type = request.GET.ext_bbox_type or 'rect' %}
+{% with bbox = request.args.ext_bbox, type = request.args.ext_bbox_type or 'rect' %}
     {% if bbox %}
         <p class="filter-list">
             <span class="facet">{{ _('Location extent') }}:</span>
@@ -27,7 +27,7 @@ e.g.
                         {{ coord|float|round(5) }}&deg;{% if not loop.last %},{% endif %}
                     {% endfor %}
                 {% elif type == 'poly' %}
-                    {{ request.GET.ext_bbox_lga or _('Polygon') }}
+                    {{ request.args.ext_bbox_lga or _('Polygon') }}
                 {% elif type == 'marker' %}
                     {% set lon, lat = bbox.split(' ') %}
                     {{ _('Longitude') }} {{ lon|float|round(5) }}&deg;
