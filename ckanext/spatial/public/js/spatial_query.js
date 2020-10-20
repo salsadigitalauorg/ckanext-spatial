@@ -415,7 +415,7 @@ this.ckan.module('spatial-query', function ($, _) {
       }
 
       function toggleCoordinateForm(event) {
-        $(event.target).toggleClass('active').parent().toggleClass('active');
+        $(event.target).parent().toggleClass('active');
 
         if (module.options.draw_default && module.options.default_extent) {
           if (!default_drawn && !extentLayer) {
