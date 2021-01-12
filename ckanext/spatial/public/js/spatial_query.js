@@ -209,6 +209,7 @@ this.ckan.module('spatial-query', function ($, _) {
           polyline: false,
           polygon: false,
           circle: false,
+          circlemarker: false,
           marker: false,
           rectangle: {shapeOptions: module.options.style}
         }
@@ -227,7 +228,7 @@ this.ckan.module('spatial-query', function ($, _) {
 
             if (!extentLayer) {
               if (should_zoom){
-                map.zoomIn();
+                map.zoomIn(2);
               }
             } else if (extentLayer){
               map.fitBounds(extentLayer.getBounds());
