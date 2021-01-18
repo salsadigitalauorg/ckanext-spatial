@@ -156,6 +156,7 @@ this.ckan.module('spatial-query', function ($, _) {
     _onReady: function() {
       var module = this;
       var map;
+      var defaultMapZoom = this.options.defaultMapZoom;
       var extentLayer;
       var previous_extent;
       var is_exanded = false;
@@ -193,13 +194,22 @@ this.ckan.module('spatial-query', function ($, _) {
       });
 
       // OK map time
+      var northEast = L.latLng(-0.753707504067988, 157.21076121765617),
+      southWest = L.latLng(-44.33550977339949, 108.39984808917536),
+      maxBounds = L.latLngBounds(northEast, southWest);
       map = ckan.commonLeafletMap(
-        'dataset-map-container',
-        this.options.map_config,
-        {
-          attributionControl: false,
-          drawControlTooltips: false
-        }
+          'dataset-map-container',
+          this.options.map_config,
+          {
+            attributionControl: false,
+            drawControlTooltips: false,
+            zoomDelta: 0.25,
+            zoomSnap: 0.25,
+            maxBounds: maxBounds
+          },
+          {
+            minZoom: 3.75
+          }
       );
 
       // Initialize the draw control
@@ -209,6 +219,7 @@ this.ckan.module('spatial-query', function ($, _) {
           polyline: false,
           polygon: false,
           circle: false,
+          circlemarker: false,
           marker: false,
           rectangle: {shapeOptions: module.options.style}
         }
@@ -227,7 +238,7 @@ this.ckan.module('spatial-query', function ($, _) {
 
             if (!extentLayer) {
               if (should_zoom){
-                map.zoomIn();
+                map.setZoom(defaultMapZoom);
               }
             } else if (extentLayer){
               map.fitBounds(extentLayer.getBounds());
