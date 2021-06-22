@@ -74,10 +74,11 @@ this.ckan.module('dataset-map', function (jQuery, _) {
       if (this.extent.type == 'Point'){
         map.setView(L.latLng(this.extent.coordinates[1], this.extent.coordinates[0]), 9);
       } else {
-        map.fitBounds(extentLayer.getBounds());
-
-        if (this.options.map_config.map_zoom) {
-          map.setZoom(this.options.map_config.map_zoom);
+        if (this.options.map_config.padding) {
+          map.fitBounds(extentLayer.getBounds(), {padding: this.options.map_config.padding});
+        }
+        else {
+          map.fitBounds(extentLayer.getBounds());
         }
       }
     }
